@@ -60,6 +60,8 @@ jobs:
         with:
           name: publication-validation
           path: wecat/.reports/
+          include-hidden-files: true
+          if-no-files-found: error
           retention-days: 14
   publish:
     needs: validate
