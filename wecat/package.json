@@ -1,0 +1,8 @@
+{
+  "name": "9router-wecat-validation",
+  "private": true,
+  "type": "module",
+  "devDependencies": {
+    "playwright": "1.58.2"
+  }
+}

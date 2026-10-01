@@ -1,3 +1,5 @@
+> **WeCat fork:** Quy trình kiểm thử, lịch sử lỗi và phát hành cho hai production targets nằm tại [wecat/README.md](wecat/README.md).
+
 <div align="center">
   <img src="./images/9router.png?1" alt="9Router Dashboard" width="800"/>
   

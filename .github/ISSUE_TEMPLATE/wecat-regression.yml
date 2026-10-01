@@ -1,0 +1,29 @@
+name: WeCat build / regression
+description: Record a build, local gate or rollout failure with sanitized evidence
+body:
+  - type: input
+    id: revision
+    attributes:
+      label: Upstream SHA / fork SHA / image digest
+    validations:
+      required: true
+  - type: dropdown
+    id: stage
+    attributes:
+      label: Failed stage
+      options: [dependency-lock, ops-test, image-contract, critical-unit, docker-build, local-api, browser, live-canary, rollout, rollback]
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproduction and expected / actual result
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: CI run or sanitized evidence
+      description: Never paste .env, SSH credentials, cookies, API keys, account emails or customer images.
+  - type: textarea
+    id: resolution
+    attributes:
+      label: Fix, regression test, rollback and verification
