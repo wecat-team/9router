@@ -28,7 +28,7 @@ try{
  if(!noBuild)check('build','docker',['build','--progress=plain','-f','wecat/Dockerfile','--build-arg','NODE_IMAGE='+config.nodeImage,'--label','org.opencontainers.image.base.name='+config.nodeImage,'--build-arg','APP_VERSION='+JSON.parse(fs.readFileSync('package.json')).version,'--label','org.opencontainers.image.revision='+commit,'-t',image,'.']);
  const info=JSON.parse(run('docker',['image','inspect',image]))[0];if(info.Config.Labels['org.opencontainers.image.revision']!==commit)throw Error('Docker image khác commit');
  report.image=image;report.imageId=info.Id;report.nodeImage=config.nodeImage;
- report.checks.container=await containerSmoke(image);
+ report.checks.container=await containerSmoke(info.Id);
  report.status=diagnostic?'diagnostic':'passed';report.finishedAt=new Date().toISOString();console.log('local-gate: '+report.status);
 }catch(e){report.error=redact(e.message);console.error(report.error);process.exitCode=1;
 }finally{fs.writeFileSync('wecat/.reports/receipt.json',JSON.stringify(report,null,2)+'\n');fs.rmSync(tmp,{recursive:true,force:true});}

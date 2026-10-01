@@ -4,12 +4,12 @@ import { chromium } from './node_modules/playwright/index.mjs';
 import { run, requireLocalUrl } from './release.mjs';
 export async function containerSmoke(image) {
  const suffix=crypto.randomBytes(6).toString('hex'),name='wecat-smoke-'+suffix,network=name+'-net',volume=name+'-data';
- const password=crypto.randomBytes(24).toString('hex');let started=false;
+ const password=crypto.randomBytes(24).toString('hex');
  const checks=[];
  try{
   run('docker',['network','create',network]);run('docker',['volume','create',volume]);
   const info=JSON.parse(run('docker',['network','inspect',network]))[0];const gateway=info.IPAM.Config[0].Gateway;
-  run('docker',['run','-d','--name',name,'--network',network,'-p','127.0.0.1::20128','-v',volume+':/app/data','-e','DATA_DIR=/app/data','-e','DISABLE_BACKGROUND_TOKEN_REFRESH=true','-e','REQUIRE_API_KEY=true','-e','JWT_SECRET='+crypto.randomBytes(32).toString('hex'),'-e','INITIAL_PASSWORD='+password,'-e','API_KEY_SECRET='+crypto.randomBytes(32).toString('hex'),'-e','MACHINE_ID_SALT='+crypto.randomBytes(32).toString('hex'),'-e','WECAT_TRUSTED_PROXY_IPS='+gateway,image]);started=true;
+  run('docker',['run','-d','--name',name,'--network',network,'-p','127.0.0.1::20128','-v',volume+':/app/data','-e','DATA_DIR=/app/data','-e','DISABLE_BACKGROUND_TOKEN_REFRESH=true','-e','REQUIRE_API_KEY=true','-e','JWT_SECRET='+crypto.randomBytes(32).toString('hex'),'-e','INITIAL_PASSWORD='+password,'-e','API_KEY_SECRET='+crypto.randomBytes(32).toString('hex'),'-e','MACHINE_ID_SALT='+crypto.randomBytes(32).toString('hex'),'-e','WECAT_TRUSTED_PROXY_IPS='+gateway,image]);
   const port=run('docker',['port',name,'20128/tcp']).split(':').at(-1);const base='http://127.0.0.1:'+port;requireLocalUrl(base);
   let ready=false;
   for(let i=0;i<60;i++){try{const r=await fetch(base+'/api/health',{signal:AbortSignal.timeout(2000)});if(r.ok){ready=true;break}}catch{}await new Promise(r=>setTimeout(r,1000));}
@@ -36,7 +36,8 @@ export async function containerSmoke(image) {
   const status=JSON.parse(run('docker',['inspect',name]))[0];assert.equal(status.RestartCount,0);assert.ok(status.State.Running);
   return {status:'passed',checks,realProviderCalls:0};
  }finally{
-  if(started)run('docker',['rm','-f',name]);
+  // docker run có thể tạo container rồi lỗi publish port; vẫn dọn đúng tên tạm của lần chạy này.
+  try{run('docker',['rm','-f',name])}catch{}
   try{run('docker',['volume','rm',volume])}catch{}
   try{run('docker',['network','rm',network])}catch{}
  }
