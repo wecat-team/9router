@@ -25,7 +25,7 @@ try{
  check('mutation',process.execPath,['wecat/mutation-check.mjs']);
  check('critical','./node_modules/.bin/vitest',['run','--config','../wecat/vitest.config.mjs',...config.criticalSuites,'--maxWorkers=2','--reporter=json','--outputFile=../wecat/.reports/critical-results.json'],{cwd:'tests'});
  const image='wecat-9router:candidate-'+commit;
- if(!noBuild)check('build','docker',['build','--progress=plain','-f','wecat/Dockerfile','--build-arg','APP_VERSION='+JSON.parse(fs.readFileSync('package.json')).version,'--label','org.opencontainers.image.revision='+commit,'-t',image,'.']);
+ if(!noBuild)check('build','docker',['build','--progress=plain','-f','wecat/Dockerfile','--build-arg','NODE_IMAGE='+config.nodeImage,'--label','org.opencontainers.image.base.name='+config.nodeImage,'--build-arg','APP_VERSION='+JSON.parse(fs.readFileSync('package.json')).version,'--label','org.opencontainers.image.revision='+commit,'-t',image,'.']);
  const info=JSON.parse(run('docker',['image','inspect',image]))[0];if(info.Config.Labels['org.opencontainers.image.revision']!==commit)throw Error('Docker image khác commit');
  report.image=image;report.imageId=info.Id;report.nodeImage=config.nodeImage;
  report.checks.container=await containerSmoke(image);

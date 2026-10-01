@@ -3,7 +3,7 @@ on:
   pull_request:
     branches: [master]
   push:
-    branches: [master, 'feat/**', 'fix/**', 'wecat/**']
+    branches: [master]
   workflow_dispatch:
 permissions:
   contents: read
