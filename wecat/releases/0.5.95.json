@@ -1,0 +1,33 @@
+{
+  "schema": 1,
+  "version": "0.5.95",
+  "upstreamCommit": "a99cf57239ff778b61e434c2786009d5ed1c412c",
+  "date": "2026-10-01",
+  "status": "production-verified-before-fork-bootstrap",
+  "forkGateAppliedToProduction": false,
+  "targets": {
+    "primary": {
+      "healthHttp": 200,
+      "restartCount": 0,
+      "sqliteIntegrity": "ok",
+      "apiKeysPreserved": true,
+      "providerIdsPreserved": true,
+      "ipPatchRetained": true,
+      "canary": {"chatMs": 2394, "imageWithTwoReferencesMs": 24564, "pngBytes": 655909}
+    },
+    "secondary": {
+      "health": "healthy",
+      "restartCount": 0,
+      "sqliteIntegrity": "ok",
+      "apiKeysPreserved": true,
+      "providerIdsPreserved": true,
+      "gateHeld": false,
+      "gateQueued": 0,
+      "canary": {"chatMs": 1598, "imageWithTwoReferencesMs": 81880, "pngBytes": 749740}
+    }
+  },
+  "notes": [
+    "This records the earlier operational rollout, not a claim that the new fork candidate has been deployed.",
+    "Local CI evidence is produced separately per fork commit and Docker image."
+  ]
+}

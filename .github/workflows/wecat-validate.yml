@@ -1,0 +1,46 @@
+name: WeCat validation
+on:
+  pull_request:
+    branches: [master]
+  push:
+    branches: [master]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: wecat-validation-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  gate:
+    name: WeCat release gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: |
+            wecat/locks/application.package-lock.json
+            wecat/locks/tests.package-lock.json
+            wecat/package-lock.json
+      - name: Install pinned dependencies
+        run: |
+          cp wecat/locks/application.package-lock.json package-lock.json
+          cp wecat/locks/tests.package-lock.json tests/package-lock.json
+          npm ci --no-audit --no-fund
+          npm --prefix tests ci --no-audit --no-fund
+          npm --prefix wecat ci --ignore-scripts --no-audit --no-fund
+          (cd wecat && ./node_modules/.bin/playwright install --with-deps chromium)
+      - name: Offline contracts, critical tests, image build, API and browser smoke
+        run: node wecat/check.mjs
+      - name: Verify receipt identity
+        run: node wecat/verify-receipt.mjs
+      - name: Keep sanitized evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wecat-validation-${{ github.sha }}
+          path: wecat/.reports/
+          retention-days: 14

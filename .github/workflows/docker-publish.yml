@@ -28,6 +28,7 @@ env:
 
 jobs:
   prepare:
+    if: github.repository == 'decolua/9router'
     name: Validate release
     runs-on: ubuntu-latest
     timeout-minutes: 10
