@@ -1,0 +1,43 @@
+{
+  "schema": 1,
+  "version": "0.5.95",
+  "upstreamCommit": "a99cf57239ff778b61e434c2786009d5ed1c412c",
+  "forkCommit": "556b4a96b8a40b6ef5e8495b873881851db3b13a",
+  "date": "2026-10-04",
+  "status": "production-verified",
+  "forkGateAppliedToProduction": true,
+  "image": {
+    "name": "wecat-9router:0.5.95-556b4a96b8a4",
+    "id": "sha256:861dd56514c27816f5f43ae073c83c545e20eb57612c644cdf0f22b3d3ce41af",
+    "platform": "linux/amd64",
+    "builtBy": "operator-local-gate",
+    "delivery": "docker save | ssh docker load",
+    "localGate": {"ops": "passed", "contracts": "passed", "mutation": "passed", "critical": "passed", "build": "passed", "container": "passed", "realProviderCalls": 0}
+  },
+  "targets": {
+    "primary": {
+      "healthHttp": 200,
+      "publicV1WithoutKey": 401,
+      "restartCount": 0,
+      "monitorMinutes": 3,
+      "sqliteIntegrity": "ok",
+      "apiKeyCount": {"before": 3, "after": 3},
+      "providerConnectionCount": {"before": 6, "after": 6},
+      "trustedProxyConfigured": true,
+      "canary": null,
+      "notes": "No live canary at rollout; first organic image request after rollout is the inference evidence."
+    },
+    "secondary": {
+      "health": "healthy",
+      "restartCount": 0,
+      "sqliteIntegrity": "ok",
+      "versionPolicy": "0.5.95 -> 0.5.95",
+      "gateHealthy": true,
+      "canary": {"text": "ok", "imageWithReferences": "ok", "imageMs": 20356, "pngBytes": 632957}
+    }
+  },
+  "notes": [
+    "Same upstream version as the previous rollout; this release moves both hosts onto one fork-built image.",
+    "No GitHub Actions or registry in the deploy path."
+  ]
+}

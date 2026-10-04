@@ -16,25 +16,25 @@ Cập nhật: **2026-10-04**. Đây là nơi duy nhất ghi "đang ở đâu". C
 
 ## Production
 
-| Vai trò | Phiên bản | Image đang chạy | Cách rollout hiện tại |
-|---|---|---|---|
-| primary | 0.5.95 (2026-10-01) | Build tại host từ source upstream, cộng patch IP cũ (tin một IP gateway Docker cố định) | Thủ công trên host: backup volume, gắn tag image rollback, build, `compose up` |
-| secondary | 0.5.95 (2026-10-02) | Image do repo ứng dụng build, pin theo digest | Script rollout của repo ứng dụng: backup, shadow clone, gate giữ request, đổi container, theo dõi 3 phút, tự khôi phục khi lỗi |
+Từ 2026-10-04, **cả hai host chạy cùng một image do fork build**: `wecat-9router:0.5.95-556b4a96b8a4`, image ID `sha256:861dd56514c27816f5f43ae073c83c545e20eb57612c644cdf0f22b3d3ce41af`, từ `master` [`556b4a96`](https://github.com/wecat-team/9router/commit/556b4a96b8a40b6ef5e8495b873881851db3b13a). Image được build bằng gate trên máy operator (amd64), rồi nạp qua `docker save | ssh docker load`. Không qua registry hay GitHub Actions.
 
-Ledger rollout 0.5.95: [`releases/0.5.95.json`](releases/0.5.95.json). Bản đó được rollout **trước** khi có gate của fork, nên không có receipt của fork.
+| Vai trò | Phiên bản | Cách rollout | Kết quả 2026-10-04 | Rollback giữ trên host |
+|---|---|---|---|---|
+| primary | 0.5.95 | compose một service, `pull_policy: never`, `WECAT_TRUSTED_PROXY_IPS` = gateway Docker của nginx | health/login 200, `/v1` thiếu key 401, API key 3→3, provider 6→6, `integrity_check` ok, theo dõi 3 phút RestartCount=0 | image build-tại-host 0.5.95 + compose cũ + backup volume lúc đã dừng |
+| secondary | 0.5.95 | script rollout của repo ứng dụng (bản nhận image local) | backup, shadow clone, auth probe, canary chat ok, canary ảnh với ảnh tham chiếu ok (PNG 633 KB, 20 s), gate healthy, RestartCount=0 | image 0.5.95 cũ + backup SQLite trước rollout |
 
-## Khoảng cách với quy trình mục tiêu
+Ledger: [`releases/0.5.95-556b4a96.json`](releases/0.5.95-556b4a96.json). Bản rollout trước khi có gate: [`releases/0.5.95.json`](releases/0.5.95.json).
 
-Quy trình mục tiêu ([README](README.md), [RUNBOOK](RUNBOOK.md)): một image do fork publish, `ghcr.io/wecat-team/9router:sha-<commit>`, đã qua gate và pin theo digest, dùng cho **cả hai** host. Hiện còn thiếu:
+Lưu ý vận hành:
 
-1. **Chưa publish image fork nào.** Workflow *WeCat publish verified candidate* chưa chạy lần nào, nên hai host vẫn build theo hai đường khác nhau. Receipt của fork chưa phủ image đang chạy.
-2. **Patch IP khác nhau.** Primary dùng patch cũ. Image fork dùng `WECAT_TRUSTED_PROXY_IPS`, nên khi chuyển phải đặt biến này đúng IP proxy của host.
-3. **Script rollout của secondary chỉ nhận tên image của repo ứng dụng.** Cần cho nó nhận `ghcr.io/wecat-team/9router@sha256:…`.
-4. **Quyền pull ghcr.** Trước lần publish đầu, cần quyết định package public hay cấp token pull read-only cho hai host.
-5. **`docker-compose.yml` của upstream trỏ `decolua/9router:latest`.** Không dùng file này cho production WeCat. Giữ nguyên vì là file upstream.
-6. **Homepage của repo GitHub vẫn là 9router.com.** Nên đổi sang trang của fork.
+- Image chỉ có trên host, không có trong registry. Vì vậy `docker compose pull` toàn stack trên secondary sẽ lỗi ở service router. Script deploy của ứng dụng chỉ pull `api web worker backup`, nên không bị ảnh hưởng.
+- Primary chưa có canary thật sau rollout. Request ảnh thật đầu tiên sau 16:46 ngày 04/10 là bằng chứng; nếu cần sớm hơn, chạy `live-canary.mjs` theo RUNBOOK.
 
-Khi xong mục 1–4, mỗi lần nâng upstream chỉ còn: merge PR → publish → rollout primary → rollout secondary, cùng một image digest.
+## Còn mở
+
+1. **`docker-compose.yml` của upstream trỏ `decolua/9router:latest`.** Không dùng file này cho production WeCat. Giữ nguyên vì là file upstream.
+2. **Homepage của repo GitHub vẫn là 9router.com.** Nên đổi sang trang của fork.
+3. **Package `ghcr.io/wecat-team/9router:sha-556b4a96…` (private) đã publish thử** nhưng không dùng. Workflow publish vẫn còn và là tùy chọn.
 
 ## Lịch sử
 
@@ -44,4 +44,5 @@ Khi xong mục 1–4, mỗi lần nâng upstream chỉ còn: merge PR → publis
 | 2026-09-24 | secondary 0.5.81 → 0.5.86 (image official, qua script rollout) |
 | 2026-10-01 | Cả hai → 0.5.95. Sự cố gặp phải ghi ở [INCIDENTS](INCIDENTS.md) W-001…W-012 |
 | 2026-10-01 | Bootstrap fork: gate, receipt, runbook ([PR #1](https://github.com/wecat-team/9router/pull/1), [PR #3](https://github.com/wecat-team/9router/pull/3)) |
-| 2026-10-04 | Trang fork `.github/README.md`, STATUS, công cụ theo dõi/nâng upstream |
+| 2026-10-04 | Trang fork `.github/README.md`, STATUS, công cụ theo dõi/nâng upstream ([PR #4](https://github.com/wecat-team/9router/pull/4)); sửa browser smoke chập chờn W-014 ([PR #5](https://github.com/wecat-team/9router/pull/5)) |
+| 2026-10-04 | Cả hai host chuyển sang image fork `wecat-9router:0.5.95-556b4a96b8a4`, build và deploy thủ công từ máy operator |
