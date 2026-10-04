@@ -1,0 +1,57 @@
+name: WeCat upstream watch
+# Chỉ đọc repo: khi decolua/9router có tag mới, mở hoặc cập nhật một issue kèm báo cáo review.
+# Không tạo nhánh, không push và không deploy. Nâng bằng: node wecat/prepare-upstream.mjs --pr
+on:
+  schedule:
+    - cron: '17 1 * * *'   # 08:17 giờ Việt Nam
+  workflow_dispatch:
+permissions:
+  contents: read
+  issues: write
+concurrency:
+  group: wecat-upstream-watch
+  cancel-in-progress: false
+jobs:
+  watch:
+    if: github.repository == 'wecat-team/9router'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+      - name: So với tag upstream mới nhất
+        run: node wecat/upstream-status.mjs --json > upstream.json
+      - name: Mở hoặc cập nhật issue theo dõi
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "$(jq -r .upToDate upstream.json)" = true ]; then
+            echo "Fork đã gồm upstream $(jq -r .ref upstream.json)." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          prefix='Upstream 9Router có bản mới'
+          title="$prefix: $(jq -r .toVersion upstream.json)"
+          jq -r .report upstream.json > body.md
+          {
+            echo
+            echo '### Cách nâng'
+            echo
+            echo '```sh'
+            echo "node wecat/prepare-upstream.mjs $(jq -r .ref upstream.json) --pr"
+            echo '```'
+            echo
+            echo 'Sau đó: CI **WeCat release gate** trên PR → merge → cập nhật `wecat/STATUS.md` → rollout theo `wecat/RUNBOOK.md`.'
+            echo
+            echo "_Cập nhật tự động $(date -u +%Y-%m-%dT%H:%MZ) bởi workflow WeCat upstream watch._"
+          } >> body.md
+          existing=$(gh issue list --state open --search "in:title \"$prefix\"" --json number --jq '.[0].number // empty')
+          if [ -n "$existing" ]; then
+            gh issue edit "$existing" --title "$title" --body-file body.md
+          else
+            gh issue create --title "$title" --body-file body.md
+          fi
+          cat body.md >> "$GITHUB_STEP_SUMMARY"
