@@ -22,7 +22,11 @@ export async function containerSmoke(image) {
    const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
    await page.goto(base+'/login',{waitUntil:'domcontentloaded'});await page.locator('input[type=password]').waitFor({state:'visible',timeout:30000});
    await page.locator('input[type=password]').fill(password);await page.locator('button[type=submit]').click();await page.waitForURL('**/dashboard**',{timeout:30000});
-   await page.goto(base+'/dashboard/providers',{waitUntil:'networkidle'});assert.equal(errors.length,0,'Browser có lỗi JavaScript');
+   // Không chờ networkidle: dashboard có request giữ kết nối nên đôi khi không bao giờ idle (W-014).
+   // Chờ đúng dữ liệu trang Providers tải về, rồi cho UI một nhịp để lỗi JS (nếu có) kịp xuất hiện.
+   const providersLoaded=page.waitForResponse(r=>new URL(r.url()).pathname==='/api/providers'&&r.request().method()==='GET',{timeout:30000});
+   await page.goto(base+'/dashboard/providers',{waitUntil:'load'});assert.equal((await providersLoaded).status(),200);
+   await page.waitForTimeout(1500);assert.equal(errors.length,0,'Browser có lỗi JavaScript');
    const providers=await context.request.get(base+'/api/providers');assert.equal(providers.status(),200);assert.deepEqual((await providers.json()).connections,[]);
    await page.screenshot({path:'wecat/.reports/dashboard.png',fullPage:true});checks.push({name:'browser-login-and-providers',status:'passed',jsErrors:0});
   }finally{await browser.close();}
