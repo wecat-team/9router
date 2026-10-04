@@ -20,7 +20,7 @@ function check(name,cmd,args,options={}){
 try{
  if(sha256(fs.readFileSync('package.json'))!==config.packageManifestSha256||sha256(fs.readFileSync('tests/package.json'))!==config.testManifestSha256||sha256(fs.readFileSync('wecat/package.json'))!==config.toolManifestSha256)throw Error('Manifest khác baseline; review dependency và cập nhật lock trước');
  restoreLocks();
- check('ops',process.execPath,['--test','wecat/tests/ops.test.mjs']);
+ check('ops',process.execPath,['--test','wecat/tests/ops.test.mjs','wecat/tests/upstream.test.mjs']);
  check('contracts',process.execPath,['wecat/contract-check.mjs']);
  check('mutation',process.execPath,['wecat/mutation-check.mjs']);
  check('critical','./node_modules/.bin/vitest',['run','--config','../wecat/vitest.config.mjs',...config.criticalSuites,'--maxWorkers=2','--reporter=json','--outputFile=../wecat/.reports/critical-results.json'],{cwd:'tests'});

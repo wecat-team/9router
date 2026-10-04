@@ -1,6 +1,6 @@
 # Sự cố và kiểm tra chống tái diễn
 
-Các ghi nhận dưới đây đến từ đợt nâng 0.5.91 → 0.5.95 ngày 01/10/2026. Đã lược bỏ host/credential/dữ liệu khách hàng. Không coi mọi lỗi dưới đây là bug application.
+W-001…W-012 đến từ đợt nâng 0.5.91 → 0.5.95 ngày 01/10/2026; mục sau đó ghi ngày riêng. Đã lược bỏ host/credential/dữ liệu khách hàng. Không coi mọi lỗi dưới đây là bug application.
 
 | ID | Hiện tượng / nguyên nhân | Xử lý | Check hiện tại |
 |---|---|---|---|
@@ -16,6 +16,7 @@ Các ghi nhận dưới đây đến từ đợt nâng 0.5.91 → 0.5.95 ngày 0
 | W-010 | Xóa/kill proxy tạm khi còn request có thể cắt các lượt sinh ảnh | Drain proxy; cleanup không là lý do rollback service đã đạt | Gate tests + rollback checklist |
 | W-012 | GitHub artifact uploader bỏ qua .reports vì là thư mục ẩn, CI vẫn xanh nhưng không có evidence | include-hidden-files=true trong đúng thư mục đã lọc; if-no-files-found=error; kiểm download artifact thực tế | Workflow upload fail-closed và xác minh artifact sau CI |
 | W-011 | Request đã hủy trong hàng đợi bị gửi tiếp sau resume, gây gọi/billing trùng | Loại queued entry khi client đóng | Abort-before-resume test, upstream call count=0 |
+| W-013 | (Local, 23/09/2026) Dev server và container dùng chung một thư mục dữ liệu, nên hai background refresher cùng refresh tài khoản Codex. Refresh token bị xoay vòng làm lỗi `refresh_token_reused`/`invalidated`, nhiều tài khoản phải đăng nhập lại | Mỗi instance một `DATA_DIR` riêng; shadow/candidate đặt `DISABLE_BACKGROUND_TOKEN_REFRESH=true` | Gate chạy với DATA_DIR tạm và tắt refresh; RUNBOOK bước 1–2; hướng dẫn local ở `.github/README.md` |
 
 ## Khi phát hiện lỗi mới
 

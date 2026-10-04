@@ -1,5 +1,9 @@
 # CLAUDE.md
 
+> **WeCat fork (`wecat-team/9router`).** This checkout is WeCat's fork of `decolua/9router`, not upstream itself. Fork rules, remotes, release gate and production constraints are in `AGENTS.md` (imported below) and `wecat/`. Current upstream/production state: `wecat/STATUS.md`. Everything after this block is upstream's guide and is kept verbatim so upstream merges stay clean.
+
+@AGENTS.md
+
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## What this is
