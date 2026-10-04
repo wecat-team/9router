@@ -6,12 +6,12 @@ Cập nhật: **2026-10-04**. Đây là nơi duy nhất ghi "đang ở đâu". C
 
 - Nguồn: [`decolua/9router`](https://github.com/decolua/9router), phát hành bằng tag `vX.Y.Z` trên `master`.
 - Fork đã chấp nhận: **0.5.95**, commit `a99cf57239ff778b61e434c2786009d5ed1c412c` (ghi trong [`validation.json`](validation.json)).
-- Kiểm ngày 2026-10-04: upstream chưa có tag hay commit mới hơn. Kiểm lại bằng `node wecat/upstream-status.mjs`. Workflow **WeCat upstream watch** cũng kiểm hằng ngày.
+- Kiểm ngày 2026-10-04: upstream chưa có tag hay commit mới hơn. Kiểm lại bằng `node wecat/upstream-status.mjs` (không có job tự động).
 
 ## Fork
 
 - `master`: upstream 0.5.95 cộng bootstrap WeCat ([PR #1](https://github.com/wecat-team/9router/pull/1), [PR #3](https://github.com/wecat-team/9router/pull/3)). [Gate trên master](https://github.com/wecat-team/9router/actions/runs/36856218283) đã đạt và có artifact.
-- Bảo vệ `master`: bắt buộc PR, check **WeCat release gate**, chặn force-push và xóa nhánh.
+- Bảo vệ `master`: bắt buộc PR, chặn force-push và xóa nhánh. Từ 2026-10-04 **không dùng GitHub Actions**: workflow `wecat-*` đã tắt, bỏ status check bắt buộc; gate chạy trên máy operator.
 - Theo dõi vận hành: [issue #2](https://github.com/wecat-team/9router/issues/2). Lỗi mới mở theo template *WeCat build / regression*.
 
 ## Production
@@ -43,4 +43,4 @@ Lưu ý vận hành:
 | 2026-10-01 | Cả hai → 0.5.95. Sự cố gặp phải ghi ở [INCIDENTS](INCIDENTS.md) W-001…W-012 |
 | 2026-10-01 | Bootstrap fork: gate, receipt, runbook ([PR #1](https://github.com/wecat-team/9router/pull/1), [PR #3](https://github.com/wecat-team/9router/pull/3)) |
 | 2026-10-04 | Trang fork `.github/README.md`, STATUS, công cụ theo dõi/nâng upstream ([PR #4](https://github.com/wecat-team/9router/pull/4)); sửa browser smoke chập chờn W-014 ([PR #5](https://github.com/wecat-team/9router/pull/5)) |
-| 2026-10-04 | Cả hai host chuyển sang image fork `wecat-9router:0.5.95-556b4a96b8a4`, build và deploy thủ công từ máy operator. Xóa package ghcr publish thử, không dùng. Homepage repo đổi từ 9router.com sang trang fork |
+| 2026-10-04 | Cả hai host chuyển sang image fork `wecat-9router:0.5.95-556b4a96b8a4`, build và deploy thủ công từ máy operator. Xóa package ghcr publish thử, không dùng. Homepage repo đổi từ 9router.com sang trang fork. Tắt toàn bộ CI/CD (workflow `wecat-*`) |

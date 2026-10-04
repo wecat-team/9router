@@ -3,7 +3,7 @@
 ## Upstream SHA / dependency lock / phạm vi ảnh hưởng
 
 ## Bằng chứng
-- WeCat release gate:
+- Gate local (`node wecat/check.mjs`, không dùng CI):
 - Docker receipt / image digest:
 - Browser login + API / ảnh tham chiếu:
 

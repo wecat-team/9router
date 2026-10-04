@@ -63,7 +63,7 @@ console.log(`Đã commit trên ${branch}.`);
 
 if (flags.has('--push') || flags.has('--pr')) run('git', ['push', '-u', 'origin', branch]);
 if (flags.has('--pr')) {
-  const body = report + '\n---\nTạo bởi `node wecat/prepare-upstream.mjs`. CI **WeCat release gate** phải xanh; chưa có deploy production.\n';
+  const body = report + '\n---\nTạo bởi `node wecat/prepare-upstream.mjs`. Chạy gate trên máy operator (`node wecat/check.mjs`) và ghi kết quả vào PR trước khi merge; chưa có deploy production.\n';
   console.log(run('gh', ['pr', 'create', '--repo', 'wecat-team/9router', '--base', 'master', '--head', branch,
     '--title', `Nâng upstream 9Router lên ${state.toVersion}`, '--body', body]));
 } else {

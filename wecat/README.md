@@ -49,15 +49,14 @@ node wecat/prepare-upstream.mjs --pr      # mặc định lấy tag upstream m�
 
 Nếu merge có conflict, script dừng và giữ nguyên trạng thái để xử lý tay. Script không bao giờ push `master` hay deploy. Thêm `--no-commit` để review trước khi commit, hoặc bỏ `--pr` để chỉ commit local. Nếu có mục `dockerfile`, chép thay đổi cần thiết của `Dockerfile` upstream sang `wecat/Dockerfile`. Báo cáo cũng được lưu ở `wecat/.reports/upstream-<version>.md`.
 
-Workflow **WeCat upstream watch** chạy hằng ngày (và chạy tay được). Workflow chỉ đọc repo; khi upstream có tag mới, nó mở hoặc cập nhật một issue *Upstream 9Router có bản mới* kèm cùng báo cáo. Sau khi merge, cập nhật [STATUS](STATUS.md).
+Không có job theo dõi tự động: thỉnh thoảng chạy `node wecat/upstream-status.mjs` (chỉ đọc). Workflow *WeCat upstream watch* vẫn còn file nhưng đã tắt. Sau khi merge, cập nhật [STATUS](STATUS.md).
 
-Không tự đưa các lỗi test mới vào `known-fails`. Suite đầy đủ của upstream có lỗi đã biết và một số test mạng; CI fork chỉ dùng tập critical được liệt kê minh bạch. Lỗi critical là blocker. Thêm/bỏ suite cần PR giải thích vì sao và bằng chứng đối chứng.
+Không tự đưa các lỗi test mới vào `known-fails`. Suite đầy đủ của upstream có lỗi đã biết và một số test mạng; Gate của fork chỉ dùng tập critical được liệt kê minh bạch. Lỗi critical là blocker. Thêm/bỏ suite cần PR giải thích vì sao và bằng chứng đối chứng.
 
 ## Phát hành và production
 
-- PR/push chạy **WeCat validation**, không gọi SSH hoặc deploy VPS.
+- **Không dùng GitHub Actions (CI/CD).** Các workflow `wecat-*` đã tắt và `master` không yêu cầu status check; gate (`node wecat/check.mjs`) chạy trên máy operator, tóm tắt kết quả trong PR. Bật lại được bằng `gh workflow enable` nếu cần.
 - **Deploy production thủ công từ máy operator**, không qua GitHub Actions. Sau khi PR merge: chạy gate local với image amd64, `node wecat/ship-image.mjs <host>...` nạp image qua SSH (so image ID với receipt), rồi rollout primary trước, secondary sau, theo [runbook](RUNBOOK.md). Repo không chứa SSH key hay hostname production.
-- Workflow **WeCat publish verified candidate** (chạy tay, cần approval `wecat-release`, publish `ghcr.io/wecat-team/9router:sha-<commit>` dạng private) vẫn còn nhưng **không thuộc đường deploy**. Hai host không pull từ ghcr.
 - Các workflow phát hành của upstream được chặn cho fork để tránh dùng nhầm namespace hoặc quy trình.
 
 Xem [tình trạng hiện tại](STATUS.md), [sự cố đã gặp](INCIDENTS.md), [release đã kiểm chứng](releases/) và [checklist PR](../.github/pull_request_template.md). Report của một commit cũ không phải bằng chứng cho commit/image mới.
