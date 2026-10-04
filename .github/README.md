@@ -12,14 +12,14 @@ Fork này **không phát triển tính năng riêng**. Mục đích là theo sá
 |---|---|
 | Upstream | `decolua/9router`, đã đồng bộ tới **v0.5.95** ([`a99cf572`](https://github.com/decolua/9router/commit/a99cf57239ff778b61e434c2786009d5ed1c412c)). Chưa có bản mới hơn. |
 | Fork | Upstream cộng với `wecat/` (gate kiểm chứng, runbook, nhật ký sự cố). `master` chỉ nhận PR có **WeCat release gate** xanh. |
-| Production | primary và secondary đều chạy **0.5.95**. |
-| Phát hành từ fork | Gate chạy trên mọi PR. Chưa publish image fork nào và production **chưa** dùng image fork: mỗi host vẫn tự build (xem STATUS). |
+| Production | primary và secondary đều chạy **0.5.95** từ **cùng một image do fork build** (`wecat-9router:0.5.95-556b4a96b8a4`), triển khai ngày 2026-10-04. |
+| Phát hành | Gate chạy trên mọi PR. Deploy **thủ công từ máy operator** qua SSH, không qua GitHub Actions hay registry. |
 
 ## Khác gì upstream
 
 - `wecat/`: gate offline (contract ảnh, mutation, 8 suite critical, Docker build với lockfile ghim, smoke API + browser), receipt gắn commit/image, runbook hai production, [nhật ký sự cố](../wecat/INCIDENTS.md), [ledger release](../wecat/releases/).
 - `wecat/Dockerfile`: giống Dockerfile upstream nhưng dùng Node image và lockfile ghim, kèm patch IP client (`WECAT_TRUSTED_PROXY_IPS`, chỉ nhận danh sách IP chính xác).
-- Workflow phát hành của upstream (Docker Hub, tray, GitBook) bị chặn trên fork. Fork chỉ publish `ghcr.io/wecat-team/9router:sha-<commit>` bằng workflow chạy tay có approval, không có `latest` và không tự deploy.
+- Workflow phát hành của upstream (Docker Hub, tray, GitBook) bị chặn trên fork. Image production do operator build bằng gate rồi nạp qua SSH. Workflow publish ghcr chạy tay chỉ là tùy chọn; không có `latest` và không có deploy tự động.
 - Root `README.md` là bản gốc của upstream, giữ nguyên để merge không conflict. Trang này (`.github/README.md`) là trang GitHub hiển thị cho fork.
 
 ## Nâng lên bản upstream mới
@@ -32,10 +32,8 @@ node wecat/prepare-upstream.mjs --pr     # nhánh candidate + merge + lockfile +
 1. Workflow **WeCat upstream watch** kiểm hằng ngày và mở (hoặc cập nhật) một issue khi upstream có tag mới.
 2. `prepare-upstream` tạo nhánh `wecat/upstream-<version>-<sha>`, merge, tạo lại lockfile nếu manifest đổi, cập nhật `wecat/validation.json`, rồi mở PR kèm danh sách cần review (patch IP, SQLite, dependency, Dockerfile, đường sinh ảnh, token refresh, workflow). Nếu có conflict, script dừng và giữ nguyên để xử lý tay.
 3. CI chạy **WeCat release gate** trên PR. Review rồi merge.
-4. Chạy workflow **WeCat publish verified candidate** với full SHA để publish image đã kiểm.
-5. Rollout primary rồi mới tới secondary theo [RUNBOOK](../wecat/RUNBOOK.md), có backup, canary và rollback.
-
-Bước 4–5 là quy trình mục tiêu, hiện chưa áp dụng cho production. Xem mục "Khoảng cách" trong [STATUS](../wecat/STATUS.md).
+4. Trên máy operator, ở checkout sạch của `master`: `DOCKER_DEFAULT_PLATFORM=linux/amd64 node wecat/check.mjs`, rồi `node wecat/ship-image.mjs <ssh-primary> <ssh-secondary>`. Lệnh này nạp image qua SSH và so image ID với receipt.
+5. Rollout primary rồi mới tới secondary theo [RUNBOOK](../wecat/RUNBOOK.md), có backup, canary và rollback. Cập nhật [STATUS](../wecat/STATUS.md) và thêm ledger trong `wecat/releases/`.
 
 ## Chạy local
 

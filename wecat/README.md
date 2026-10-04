@@ -56,8 +56,8 @@ Không tự đưa các lỗi test mới vào `known-fails`. Suite đầy đủ c
 ## Phát hành và production
 
 - PR/push chạy **WeCat validation**, không gọi SSH hoặc deploy VPS.
-- Workflow **WeCat publish verified candidate** chạy tay, chỉ nhận full SHA thuộc master. Nó chạy lại gate, kiểm receipt/image/lock, cần approval tại environment `wecat-release`, rồi publish `ghcr.io/wecat-team/9router:sha-<commit>`; không cập nhật `latest` hoặc deploy.
-- Promotion production được làm riêng, theo [runbook](RUNBOOK.md), có reviewer ở `production-primary` / `production-secondary` và hai canary thật. Repo chưa chứa SSH key của production.
+- **Deploy production thủ công từ máy operator**, không qua GitHub Actions. Sau khi PR merge: chạy gate local với image amd64, `node wecat/ship-image.mjs <host>...` nạp image qua SSH (so image ID với receipt), rồi rollout primary trước, secondary sau, theo [runbook](RUNBOOK.md). Repo không chứa SSH key hay hostname production.
+- Workflow **WeCat publish verified candidate** (chạy tay, cần approval `wecat-release`, publish `ghcr.io/wecat-team/9router:sha-<commit>` dạng private) vẫn còn nhưng **không thuộc đường deploy**. Hai host không pull từ ghcr.
 - Các workflow phát hành của upstream được chặn cho fork để tránh dùng nhầm namespace hoặc quy trình.
 
-Xem [tình trạng hiện tại](STATUS.md), [sự cố đã gặp](INCIDENTS.md), [release đã kiểm chứng](releases/0.5.95.json) và [checklist PR](../.github/pull_request_template.md). Report của một commit cũ không phải bằng chứng cho commit/image mới.
+Xem [tình trạng hiện tại](STATUS.md), [sự cố đã gặp](INCIDENTS.md), [release đã kiểm chứng](releases/) và [checklist PR](../.github/pull_request_template.md). Report của một commit cũ không phải bằng chứng cho commit/image mới.

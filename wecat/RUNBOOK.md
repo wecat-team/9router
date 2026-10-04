@@ -1,12 +1,19 @@
 # Runbook nâng cấp hai production VPS
 
-Dùng tên vai trò `primary` và `secondary`; hostname/SSH identity/secret thực tế nằm ngoài repo public. Các environment GitHub được chuẩn bị để duyệt rollout; việc tạo environment chưa cấp quyền SSH cho runner.
+Dùng tên vai trò `primary` và `secondary`; hostname/SSH identity/secret thực tế nằm ngoài repo public. Rollout do operator chạy từ máy local qua SSH; GitHub Actions không có quyền SSH và không deploy.
 
 ## Điều kiện phát hành
 
-- PR đã review, CI **WeCat release gate** xanh trên đúng SHA.
-- `node wecat/verify-receipt.mjs` đạt; image digest và lock hash khớp receipt.
-- Image candidate được publish bằng tag `sha-<commit>`, deployment pin digest sau khi kiểm tra. Không pull `latest` trên prod.
+- PR đã review, CI **WeCat release gate** xanh trên đúng SHA đã merge vào `master`.
+- Deploy **thủ công từ máy operator**, không qua GitHub Actions hay registry. Trên checkout sạch của commit đó, chạy gate với image amd64 (giống kiến trúc hai host), rồi nạp image sang từng host:
+
+  ```sh
+  DOCKER_DEFAULT_PLATFORM=linux/amd64 node wecat/check.mjs   # Mac ARM build qua giả lập, lâu hơn CI
+  node wecat/verify-receipt.mjs
+  node wecat/ship-image.mjs <ssh-primary> <ssh-secondary>    # docker save | ssh docker load, so image ID với receipt
+  ```
+
+  Image trên host tên `wecat-9router:<version>-<sha12>`, image ID phải trùng receipt. Không pull `latest` trên prod. Workflow *WeCat publish verified candidate* chỉ là tùy chọn, không thuộc đường deploy.
 - Đọc INCIDENTS; xác định model WeCat đang sử dụng và khác biệt từ release trước.
 - Có backup SQLite được tạo bằng SQLite backup API, chạy `integrity_check`, quyền 600; backup cấu hình trong thư mục quyền 700. Giữ image cũ và bí mật hiện tại.
 - Khóa rollout toàn host, không đồng thời với rollout app khác.
@@ -22,6 +29,11 @@ Dùng tên vai trò `primary` và `secondary`; hostname/SSH identity/secret th�
 7. Canary chat + PNG binary có **hai ảnh tham chiếu hợp lệ**. Dùng đúng payload WeCat: `image` là chuỗi cho một ảnh; `images` là mảng cho nhiều ảnh; `response_format=binary` trên query. Mức chất lượng `low` cho smoke để giới hạn chi phí.
 8. Resume traffic, xác minh gate `held=false`, `queued=0`. Theo dõi ít nhất ba phút: container health, RestartCount, lỗi SQLite, HTTP lỗi và request thực tế từ app gọi gateway. Không dùng health 200 để kết luận inference thành công.
 9. Chỉ sau khi host thứ nhất đạt mới chuyển host thứ hai. Khôi phục cấu hình proxy bình thường và drain proxy tạm trước khi xóa. Giữ backup và image rollback, ghi kết quả vào ledger/issue bằng dữ liệu đã lọc.
+
+### Lệnh theo vai trò
+
+- **primary** (compose một service, không có gate): kiểm không còn kết nối tới cổng router, `docker compose stop`, backup volume khi đã dừng, đổi `image:` trong compose sang `wecat-9router:<version>-<sha12>` (`pull_policy: never`), `docker compose up -d`. So số API key/provider và `integrity_check` trước và sau. Rollback: trả compose cũ rồi `up -d`.
+- **secondary** (stack ứng dụng có router-gate): chạy script rollout của repo ứng dụng với tên image local, bằng user `deploy`. Script lo backup, shadow clone, giữ gate, đổi container, canary, theo dõi và tự khôi phục. Bản dùng cho image local chỉ khác bản gốc hai điểm: nhận tên `wecat-9router:<version>-<sha12>`, và chỉ pull khi image chưa có trên host.
 
 ## Canary thật
 
