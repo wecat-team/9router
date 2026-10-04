@@ -8,5 +8,6 @@
 - Không commit `.env`, SSH key, OAuth token, API key/cookie, hostname/IP production, ảnh hoặc prompt khách hàng. Public docs chỉ dùng primary/secondary.
 - Không deploy/pull latest theo push/PR. Bản candidate phải có full SHA, image digest, receipt đúng commit và các gate đạt. Production cần operator approval riêng, canary và rollback.
 - Test local dùng dataset/container riêng, không dùng volume hoặc credential production. Canary thật cần cờ --allow-live và được phép sử dụng quota.
+- Không dùng GitHub Actions/CI-CD (chi phí): workflow `wecat-*` đã tắt, không bật lại hay thêm workflow mới nếu chưa được đồng ý. Gate chạy trên máy operator và tóm tắt kết quả trong PR.
 - Gate chuẩn: `node wecat/check.mjs` và `node wecat/verify-receipt.mjs`. Diagnostic không là release evidence. Lỗi critical mới không được che bằng known-fails.
 - Trước commit, kiểm remotes. Nếu có remote wecat-team, thêm trailer `Co-Authored-By` của đúng agent đã làm, cách body một dòng trống: Codex dùng `Co-Authored-By: Codex <noreply@openai.com>`, Claude dùng trailer Claude Code cấp. Giữ Git author/committer của người dùng.

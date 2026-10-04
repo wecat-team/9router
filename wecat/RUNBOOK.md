@@ -4,16 +4,16 @@ Dùng tên vai trò `primary` và `secondary`; hostname/SSH identity/secret th�
 
 ## Điều kiện phát hành
 
-- PR đã review, CI **WeCat release gate** xanh trên đúng SHA đã merge vào `master`.
+- PR đã review và merge vào `master`; gate chạy trên máy operator (không dùng CI).
 - Deploy **thủ công từ máy operator**, không qua GitHub Actions hay registry. Trên checkout sạch của commit đó, chạy gate với image amd64 (giống kiến trúc hai host), rồi nạp image sang từng host:
 
   ```sh
-  DOCKER_DEFAULT_PLATFORM=linux/amd64 node wecat/check.mjs   # Mac ARM build qua giả lập, lâu hơn CI
+  DOCKER_DEFAULT_PLATFORM=linux/amd64 node wecat/check.mjs   # Mac ARM build amd64 qua giả lập nên chậm
   node wecat/verify-receipt.mjs
   node wecat/ship-image.mjs <ssh-primary> <ssh-secondary>    # docker save | ssh docker load, so image ID với receipt
   ```
 
-  Image trên host tên `wecat-9router:<version>-<sha12>`, image ID phải trùng receipt. Không pull `latest` trên prod. Workflow *WeCat publish verified candidate* chỉ là tùy chọn, không thuộc đường deploy.
+  Image trên host tên `wecat-9router:<version>-<sha12>`, image ID phải trùng receipt. Không pull `latest` trên prod.
 - Đọc INCIDENTS; xác định model WeCat đang sử dụng và khác biệt từ release trước.
 - Có backup SQLite được tạo bằng SQLite backup API, chạy `integrity_check`, quyền 600; backup cấu hình trong thư mục quyền 700. Giữ image cũ và bí mật hiện tại.
 - Khóa rollout toàn host, không đồng thời với rollout app khác.
@@ -37,7 +37,7 @@ Dùng tên vai trò `primary` và `secondary`; hostname/SSH identity/secret th�
 
 ## Canary thật
 
-Đây là một thao tác dùng quota: mặc định không chạy trong CI/local gate. Operator được phép truyền `WECAT_CANARY_BASE_URL` (base `/v1`), `WECAT_CANARY_API_KEY`, `WECAT_CANARY_TARGET=primary|secondary` qua cơ chế secret an toàn, rồi gọi:
+Đây là một thao tác dùng quota: mặc định không chạy trong gate. Operator được phép truyền `WECAT_CANARY_BASE_URL` (base `/v1`), `WECAT_CANARY_API_KEY`, `WECAT_CANARY_TARGET=primary|secondary` qua cơ chế secret an toàn, rồi gọi:
 
 ```sh
 node wecat/live-canary.mjs --allow-live
