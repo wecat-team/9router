@@ -1,18 +1,29 @@
 # Tình trạng 9Router WeCat
 
-Cập nhật: **2026-10-04**. Đây là nơi duy nhất ghi "đang ở đâu". Cập nhật file này trong cùng PR khi nâng upstream, và sau mỗi lần rollout production. Chỉ dùng tên vai trò primary/secondary; hostname, IP và credential không vào repo.
+Cập nhật: **2026-10-10**. Đây là nơi duy nhất ghi "đang ở đâu". Cập nhật file này trong cùng PR khi nâng upstream, và sau mỗi lần rollout production. Chỉ dùng tên vai trò primary/secondary; hostname, IP và credential không vào repo.
 
 ## Upstream
 
 - Nguồn: [`decolua/9router`](https://github.com/decolua/9router), phát hành bằng tag `vX.Y.Z` trên `master`.
-- Fork đã chấp nhận: **0.5.95**, commit `a99cf57239ff778b61e434c2786009d5ed1c412c` (ghi trong [`validation.json`](validation.json)).
-- Kiểm ngày 2026-10-04: upstream chưa có tag hay commit mới hơn. Kiểm lại bằng `node wecat/upstream-status.mjs` (không có job tự động).
+- Bản trước candidate: **0.5.95**, commit `a99cf57239ff778b61e434c2786009d5ed1c412c`; production vẫn giữ bản này.
+- Candidate **0.5.99** lấy từ `upstream/master`, ghim full SHA `ce4460ef79382bfddb4aa5fc0ff9f3cb0d5f95a8` trong [`validation.json`](validation.json). So với bản trước: 29 commit, 163 file thay đổi. Chưa có canary thật hay rollout production cho candidate.
+- Kiểm ngày 2026-10-10: candidate được chuẩn bị bằng `prepare-upstream.mjs master --no-commit`, rồi chốt commit và PR sau review. Gate phát hành phải chạy trên checkout sạch và receipt phải đúng commit/image, không dùng receipt diagnostic của lượt review.
 
 ## Fork
 
 - `master`: upstream 0.5.95 cộng bootstrap WeCat ([PR #1](https://github.com/wecat-team/9router/pull/1), [PR #3](https://github.com/wecat-team/9router/pull/3)). [Gate trên master](https://github.com/wecat-team/9router/actions/runs/36856218283) đã đạt và có artifact.
-- Bảo vệ `master`: bắt buộc PR, chặn force-push và xóa nhánh. Từ 2026-10-04 **không dùng GitHub Actions**: workflow `wecat-*` đã tắt, bỏ status check bắt buộc; gate chạy trên máy operator.
+- Bảo vệ `master`: bắt buộc PR và check `WeCat release gate` từ GitHub Actions, chặn force-push và xóa nhánh. Workflow validation đang active; các workflow publish/deploy/watch vẫn tắt. Gate phát hành image production vẫn chạy trên máy operator.
 - Theo dõi vận hành: [issue #2](https://github.com/wecat-team/9router/issues/2). Lỗi mới mở theo template *WeCat build / regression*.
+
+### Candidate 0.5.99
+
+- Operator ngày 2026-10-10 đã cho phép chạy Actions validation; chỉ khi đạt mới merge, chạy gate trên commit master, canary và rollout primary rồi secondary. Giữ nguyên API key/cấu hình và chuẩn bị rollback; không deploy tự động từ PR/push.
+- [Validation thủ công trên candidate ban đầu](https://github.com/wecat-team/9router/actions/runs/38022169631) đã đạt, nhưng check `workflow_dispatch` không mở khóa check bắt buộc của PR. Commit tài liệu tiếp theo không có skip instruction để validation chạy theo sự kiện PR; giữ nguyên workflow và bảo vệ master.
+- API key cũ mặc định không bị giới hạn sau khi thêm hai cột `accessRestricted`/`accessAllow`. Rollback image 0.5.95 đọc được DB mở rộng, nhưng không thực thi ACL mới: không bật hạn chế key trong đợt nâng đầu tiên.
+- Test synthetic của lượt review: 0.5.95 → 0.5.99 → 0.5.95 giữ API key, sáu provider giả và usage; `integrity_check` đạt, backup trước đổi schema được tạo. Phải chạy lại trên image phát hành trước handoff.
+- Token ảnh Codex được ghi vào Usage khi provider trả usage; giá USD cho model `*-image` có thể dùng giá text hoặc bằng 0 nếu chưa cấu hình giá riêng. Không coi đó là hóa đơn/quota thực tế.
+- Payload ảnh, binary endpoint, danh sách model Codex và refresh Codex không đổi. Review dependency lock giữ version cũ cho dependency hiện hữu; thêm AWS/Smithy và `enquirer`. `npm audit` vẫn có 9 cảnh báo có sẵn (7 high, 2 moderate), không thêm so với baseline; đây không phải kết luận không còn rủi ro bảo mật.
+- Chưa thực hiện canary provider thật trên candidate. Nếu được phép rollout sau này: giữ gate intake, dừng writer cũ trước writer mới, backup SQLite nhất quán và giữ image/config 0.5.95 để rollback theo [RUNBOOK](RUNBOOK.md).
 
 ## Production
 
