@@ -12,13 +12,13 @@ Cập nhật: **2026-10-10**. Đây là nơi duy nhất ghi "đang ở đâu". C
 ## Fork
 
 - `master`: upstream 0.5.95 cộng bootstrap WeCat ([PR #1](https://github.com/wecat-team/9router/pull/1), [PR #3](https://github.com/wecat-team/9router/pull/3)). [Gate trên master](https://github.com/wecat-team/9router/actions/runs/36856218283) đã đạt và có artifact.
-- Bảo vệ `master`: bắt buộc PR, chặn force-push và xóa nhánh. Từ 2026-10-04 **không dùng GitHub Actions**: workflow `wecat-*` đã tắt, bỏ status check bắt buộc; gate chạy trên máy operator.
+- Bảo vệ `master`: bắt buộc PR và check `WeCat release gate` từ GitHub Actions, chặn force-push và xóa nhánh. Workflow validation đang active; các workflow publish/deploy/watch vẫn tắt. Gate phát hành image production vẫn chạy trên máy operator.
 - Theo dõi vận hành: [issue #2](https://github.com/wecat-team/9router/issues/2). Lỗi mới mở theo template *WeCat build / regression*.
 
 ### Candidate 0.5.99
 
-- Chỉ chuẩn bị candidate theo quyết định operator ngày 2026-10-10; không đổi bảo vệ master và không deploy từ PR/push.
-- Kiểm thực tế ngày 2026-10-10: master vẫn yêu cầu check `WeCat release gate` từ GitHub Actions và workflow `WeCat validation` đang active. Giữ nguyên workflow/bảo vệ theo quyết định operator, không dùng CI/CD cho candidate: commit candidate có `[skip ci]` để PR không tự chạy Actions. Gate local và bình luận PR không thay thế check Actions; PR còn bị chặn merge.
+- Operator ngày 2026-10-10 đã cho phép chạy Actions validation; chỉ khi đạt mới merge, chạy gate trên commit master, canary và rollout primary rồi secondary. Giữ nguyên API key/cấu hình và chuẩn bị rollback; không deploy tự động từ PR/push.
+- [Validation thủ công trên candidate ban đầu](https://github.com/wecat-team/9router/actions/runs/38022169631) đã đạt, nhưng check `workflow_dispatch` không mở khóa check bắt buộc của PR. Commit tài liệu tiếp theo không có skip instruction để validation chạy theo sự kiện PR; giữ nguyên workflow và bảo vệ master.
 - API key cũ mặc định không bị giới hạn sau khi thêm hai cột `accessRestricted`/`accessAllow`. Rollback image 0.5.95 đọc được DB mở rộng, nhưng không thực thi ACL mới: không bật hạn chế key trong đợt nâng đầu tiên.
 - Test synthetic của lượt review: 0.5.95 → 0.5.99 → 0.5.95 giữ API key, sáu provider giả và usage; `integrity_check` đạt, backup trước đổi schema được tạo. Phải chạy lại trên image phát hành trước handoff.
 - Token ảnh Codex được ghi vào Usage khi provider trả usage; giá USD cho model `*-image` có thể dùng giá text hoặc bằng 0 nếu chưa cấu hình giá riêng. Không coi đó là hóa đơn/quota thực tế.
