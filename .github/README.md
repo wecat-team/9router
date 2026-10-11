@@ -6,20 +6,20 @@ Fork này **không phát triển tính năng riêng**. Mục đích là theo sá
 
 ## Tình trạng
 
-> Cập nhật 2026-10-04. Chi tiết và việc còn mở: [wecat/STATUS.md](../wecat/STATUS.md).
+> Cập nhật 2026-10-11. Chi tiết và việc còn mở: [wecat/STATUS.md](../wecat/STATUS.md).
 
 | | |
 |---|---|
-| Upstream | `decolua/9router`, đã đồng bộ tới **v0.5.95** ([`a99cf572`](https://github.com/decolua/9router/commit/a99cf57239ff778b61e434c2786009d5ed1c412c)). Chưa có bản mới hơn. |
+| Upstream | `decolua/9router`, đã đồng bộ **0.5.99**, ghim `upstream/master` [`ce4460ef`](https://github.com/decolua/9router/commit/ce4460ef79382bfddb4aa5fc0ff9f3cb0d5f95a8). |
 | Fork | Upstream cộng với `wecat/` (gate kiểm chứng, runbook, nhật ký sự cố). `master` chỉ nhận qua PR, gate chạy trên máy operator. |
-| Production | primary và secondary đều chạy **0.5.95** từ **cùng một image do fork build** (`wecat-9router:0.5.95-556b4a96b8a4`), triển khai ngày 2026-10-04. |
-| Phát hành | **Không dùng GitHub Actions (CI/CD).** Gate chạy trên máy operator; deploy thủ công qua SSH, không qua registry. |
+| Production | primary **0.5.99**, canary/monitor đạt; secondary rollback về **0.5.95**, cần đăng nhập lại Codex trước canary/rollout tiếp. Key/cấu hình và backup/image rollback giữ nguyên. |
+| Phát hành | Actions validation chỉ khi operator cho phép (đã cho phép đợt 0.5.99). Gate image chạy trên máy operator; deploy thủ công qua SSH, không qua registry/Actions. |
 
 ## Khác gì upstream
 
 - `wecat/`: gate offline (contract ảnh, mutation, 8 suite critical, Docker build với lockfile ghim, smoke API + browser), receipt gắn commit/image, runbook hai production, [nhật ký sự cố](../wecat/INCIDENTS.md), [ledger release](../wecat/releases/).
 - `wecat/Dockerfile`: giống Dockerfile upstream nhưng dùng Node image và lockfile ghim, kèm patch IP client (`WECAT_TRUSTED_PROXY_IPS`, chỉ nhận danh sách IP chính xác).
-- Workflow phát hành của upstream (Docker Hub, tray, GitBook) bị chặn trên fork. Các workflow `wecat-*` cũng đã tắt (không dùng CI/CD). Image production do operator build bằng gate rồi nạp qua SSH; không có `latest` và không có deploy tự động.
+- Workflow publish/watch và phát hành upstream (Docker Hub, tray, GitBook) vẫn tắt. Validation đang active, master giữ check bắt buộc và lịch sử tuyến tính; không đổi bảo vệ để merge. Image production do operator build bằng gate rồi nạp qua SSH; không có `latest` hay deploy tự động.
 - Root `README.md` là bản gốc của upstream, giữ nguyên để merge không conflict. Trang này (`.github/README.md`) là trang GitHub hiển thị cho fork.
 
 ## Nâng lên bản upstream mới

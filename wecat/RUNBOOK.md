@@ -33,7 +33,7 @@ Dùng tên vai trò `primary` và `secondary`; hostname/SSH identity/secret th�
 ### Lệnh theo vai trò
 
 - **primary** (compose một service, không có gate): kiểm không còn kết nối tới cổng router, `docker compose stop`, backup volume khi đã dừng, đổi `image:` trong compose sang `wecat-9router:<version>-<sha12>` (`pull_policy: never`), `docker compose up -d`. So số API key/provider và `integrity_check` trước và sau. Rollback: trả compose cũ rồi `up -d`.
-- **secondary** (stack ứng dụng có router-gate): chạy script rollout của repo ứng dụng với tên image local, bằng user `deploy`. Script lo backup, shadow clone, giữ gate, đổi container, canary, theo dõi và tự khôi phục. Bản dùng cho image local chỉ khác bản gốc hai điểm: nhận tên `wecat-9router:<version>-<sha12>`, và chỉ pull khi image chưa có trên host.
+- **secondary** (stack ứng dụng có router-gate): chạy script rollout của repo ứng dụng với tên image local, bằng user `deploy`. Script lo backup, shadow clone, giữ gate, đổi container, canary, theo dõi và tự khôi phục. Bản dùng cho image local chỉ khác bản gốc hai điểm: nhận tên `wecat-9router:<version>-<sha12>`, và chỉ pull khi image chưa có trên host. Kiểm protocol image gate hiện hữu: bản đang deploy chỉ có `hold-if-idle`, không giả định có `hold`. Chỉ retry busy 409, lỗi khác dừng. Backup riêng phải ở thư mục được loại khỏi rsync deploy ứng dụng hoặc ngoài cây checkout.
 
 ## Canary thật
 

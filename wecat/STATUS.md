@@ -1,49 +1,50 @@
 # Tình trạng 9Router WeCat
 
-Cập nhật: **2026-10-10**. Đây là nơi duy nhất ghi "đang ở đâu". Cập nhật file này trong cùng PR khi nâng upstream, và sau mỗi lần rollout production. Chỉ dùng tên vai trò primary/secondary; hostname, IP và credential không vào repo.
+Cập nhật: **2026-10-11**. Đây là nơi duy nhất ghi "đang ở đâu". Cập nhật file này trong cùng PR khi nâng upstream, và sau mỗi lần rollout production. Chỉ dùng tên vai trò primary/secondary; hostname, IP và credential không vào repo.
 
 ## Upstream
 
 - Nguồn: [`decolua/9router`](https://github.com/decolua/9router), phát hành bằng tag `vX.Y.Z` trên `master`.
-- Bản trước candidate: **0.5.95**, commit `a99cf57239ff778b61e434c2786009d5ed1c412c`; production vẫn giữ bản này.
-- Candidate **0.5.99** lấy từ `upstream/master`, ghim full SHA `ce4460ef79382bfddb4aa5fc0ff9f3cb0d5f95a8` trong [`validation.json`](validation.json). So với bản trước: 29 commit, 163 file thay đổi. Chưa có canary thật hay rollout production cho candidate.
+- Bản trước: **0.5.95**, commit `a99cf57239ff778b61e434c2786009d5ed1c412c`; secondary đang giữ bản này sau rollback.
+- Đã đồng bộ **0.5.99** từ `upstream/master`, ghim full SHA `ce4460ef79382bfddb4aa5fc0ff9f3cb0d5f95a8` trong [`validation.json`](validation.json). So với bản trước: 29 commit, 163 file thay đổi. Primary đã qua canary thật; secondary chưa được chấp nhận.
 - Kiểm ngày 2026-10-10: candidate được chuẩn bị bằng `prepare-upstream.mjs master --no-commit`, rồi chốt commit và PR sau review. Gate phát hành phải chạy trên checkout sạch và receipt phải đúng commit/image, không dùng receipt diagnostic của lượt review.
 
 ## Fork
 
-- `master`: upstream 0.5.95 cộng bootstrap WeCat ([PR #1](https://github.com/wecat-team/9router/pull/1), [PR #3](https://github.com/wecat-team/9router/pull/3)). [Gate trên master](https://github.com/wecat-team/9router/actions/runs/36856218283) đã đạt và có artifact.
+- [PR #10](https://github.com/wecat-team/9router/pull/10) đã squash merge theo bảo vệ lịch sử tuyến tính. Commit phát hành: `1bb26a28395bf77bceb6196bca8f8494c1108676`. [Validation PR](https://github.com/wecat-team/9router/actions/runs/38022476245) và [validation master](https://github.com/wecat-team/9router/actions/runs/38022748879) đạt; receipt master đã tải kiểm tra.
 - Bảo vệ `master`: bắt buộc PR và check `WeCat release gate` từ GitHub Actions, chặn force-push và xóa nhánh. Workflow validation đang active; các workflow publish/deploy/watch vẫn tắt. Gate phát hành image production vẫn chạy trên máy operator.
 - Theo dõi vận hành: [issue #2](https://github.com/wecat-team/9router/issues/2). Lỗi mới mở theo template *WeCat build / regression*.
 
-### Candidate 0.5.99
+### Phát hành 0.5.99
 
 - Operator ngày 2026-10-10 đã cho phép chạy Actions validation; chỉ khi đạt mới merge, chạy gate trên commit master, canary và rollout primary rồi secondary. Giữ nguyên API key/cấu hình và chuẩn bị rollback; không deploy tự động từ PR/push.
 - [Validation thủ công trên candidate ban đầu](https://github.com/wecat-team/9router/actions/runs/38022169631) đã đạt, nhưng check `workflow_dispatch` không mở khóa check bắt buộc của PR. Commit tài liệu tiếp theo không có skip instruction để validation chạy theo sự kiện PR; giữ nguyên workflow và bảo vệ master.
 - API key cũ mặc định không bị giới hạn sau khi thêm hai cột `accessRestricted`/`accessAllow`. Rollback image 0.5.95 đọc được DB mở rộng, nhưng không thực thi ACL mới: không bật hạn chế key trong đợt nâng đầu tiên.
-- Test synthetic của lượt review: 0.5.95 → 0.5.99 → 0.5.95 giữ API key, sáu provider giả và usage; `integrity_check` đạt, backup trước đổi schema được tạo. Phải chạy lại trên image phát hành trước handoff.
+- Gate operator trên SHA master đạt: ops, contracts, mutation, 95 test critical, build amd64, API/browser smoke (0 lỗi JavaScript) và receipt đúng commit/image/lock. 132 test bổ sung đạt. Test synthetic chạy lại trên image phát hành: 0.5.95 → 0.5.99 → 0.5.95 giữ key, sáu provider giả và usage; SQLite/backup schema đạt.
 - Token ảnh Codex được ghi vào Usage khi provider trả usage; giá USD cho model `*-image` có thể dùng giá text hoặc bằng 0 nếu chưa cấu hình giá riêng. Không coi đó là hóa đơn/quota thực tế.
 - Payload ảnh, binary endpoint, danh sách model Codex và refresh Codex không đổi. Review dependency lock giữ version cũ cho dependency hiện hữu; thêm AWS/Smithy và `enquirer`. `npm audit` vẫn có 9 cảnh báo có sẵn (7 high, 2 moderate), không thêm so với baseline; đây không phải kết luận không còn rủi ro bảo mật.
-- Chưa thực hiện canary provider thật trên candidate. Nếu được phép rollout sau này: giữ gate intake, dừng writer cũ trước writer mới, backup SQLite nhất quán và giữ image/config 0.5.95 để rollback theo [RUNBOOK](RUNBOOK.md).
+- Canary primary đã đạt; secondary tự rollback khi canary không đạt. Không bypass canary hoặc chép credential từ host khác. Cần đăng nhập lại Codex trên secondary rồi canary/rollout lại theo [RUNBOOK](RUNBOOK.md).
 
 ## Production
 
-Từ 2026-10-04, **cả hai host chạy cùng một image do fork build**: `wecat-9router:0.5.95-556b4a96b8a4`, image ID `sha256:861dd56514c27816f5f43ae073c83c545e20eb57612c644cdf0f22b3d3ce41af`, từ `master` [`556b4a96`](https://github.com/wecat-team/9router/commit/556b4a96b8a40b6ef5e8495b873881851db3b13a). Image được build bằng gate trên máy operator (amd64), rồi nạp qua `docker save | ssh docker load`. Không qua registry hay GitHub Actions.
+Image 0.5.99 do gate operator build (amd64): `wecat-9router:0.5.99-1bb26a28395b`, ID `sha256:2e3a8604500a30770968743f9ec481a777b38ab494777cecbda2419f2ead1b47`. Đã nạp sang cả hai host qua SSH và so ID với receipt; chỉ primary được chấp nhận chạy image này. Không deploy qua registry/GitHub Actions.
 
-| Vai trò | Phiên bản | Cách rollout | Kết quả 2026-10-04 | Rollback giữ trên host |
+| Vai trò | Phiên bản đang chạy | Kết quả 10–11/10/2026 | Dữ liệu/cấu hình | Rollback giữ trên host |
 |---|---|---|---|---|
-| primary | 0.5.95 | compose một service, `pull_policy: never`, `WECAT_TRUSTED_PROXY_IPS` = gateway Docker của nginx | health/login 200, `/v1` thiếu key 401, API key 3→3, provider 6→6, `integrity_check` ok, theo dõi 3 phút RestartCount=0 | image build-tại-host 0.5.95 + compose cũ + backup volume lúc đã dừng |
-| secondary | 0.5.95 | script rollout của repo ứng dụng (bản nhận image local) | backup, shadow clone, auth probe, canary chat ok, canary ảnh với ảnh tham chiếu ok (PNG 633 KB, 20 s), gate healthy, RestartCount=0 | image 0.5.95 cũ + backup SQLite trước rollout |
+| primary | 0.5.99 | shadow đạt; chat 200 (~3 s), PNG hai reference 200 (~89 s, 984057 byte); monitor 180 s đạt, RestartCount=0; proxy tạm drain rồi dọn; kiểm lại HTTPS auth/phiên bản ngày 11/10 đạt | API key 3→3, provider 6→6; fingerprint settings/proxy/key giữ nguyên, SQLite ok | image 0.5.95 + compose/env cũ + SQLite backup API đã kiểm integrity + full volume khi writer dừng |
+| secondary | 0.5.95 sau rollback | shadow/auth đạt; canary 0.5.99 không đạt nên tự trả image cũ. Đối chứng 0.5.95 chat 503; cả 6 provider có lỗi refresh/401 trong backup trước handoff. Gate healthy, held=false, queued=0, RestartCount=0 | API key 1→1, provider 6→6; settings/proxy/key giữ nguyên, SQLite ok; ACL mới vẫn không bật | image 0.5.95 và 0.5.99 đều giữ; backup cấu hình/SQLite/full volume ngoài cây deploy ứng dụng |
 
-Ledger: [`releases/0.5.95-556b4a96.json`](releases/0.5.95-556b4a96.json). Bản rollout trước khi có gate: [`releases/0.5.95.json`](releases/0.5.95.json).
+Ledger hiện tại: [`releases/0.5.99-1bb26a28.json`](releases/0.5.99-1bb26a28.json) (**partial rollout**, không ghi cả hai prod đã nâng). Lịch sử: [`releases/0.5.95-556b4a96.json`](releases/0.5.95-556b4a96.json), [`releases/0.5.95.json`](releases/0.5.95.json).
 
 Lưu ý vận hành:
 
 - Image chỉ có trên host, không có trong registry. Vì vậy `docker compose pull` toàn stack trên secondary sẽ lỗi ở service router. Script deploy của ứng dụng chỉ pull `api web worker backup`, nên không bị ảnh hưởng.
-- Primary chưa có canary thật sau rollout. Request ảnh thật đầu tiên sau 16:46 ngày 04/10 là bằng chứng; nếu cần sớm hơn, chạy `live-canary.mjs` theo RUNBOOK.
+- Health/auth 200 không chứng minh inference tốt: secondary cần sửa credential Codex trước canary lại. Chỉ một container mount volume router production; shadow đã dọn.
 
 ## Còn mở
 
 1. **`docker-compose.yml` của upstream trỏ `decolua/9router:latest`.** Không dùng file này cho production WeCat. Giữ nguyên vì là file upstream.
+2. **Secondary chưa lên 0.5.99:** sáu OAuth Codex lỗi refresh/401 trước rollout; bản 0.5.95 cũng không inference được (503). Cần operator đăng nhập lại, sau đó canary/rollout; không sửa/xóa API key hoặc thay tài khoản để che lỗi.
 
 ## Lịch sử
 

@@ -55,7 +55,7 @@ Không tự đưa các lỗi test mới vào `known-fails`. Suite đầy đủ c
 
 ## Phát hành và production
 
-- **Không dùng GitHub Actions (CI/CD).** Các workflow `wecat-*` đã tắt và `master` không yêu cầu status check; gate (`node wecat/check.mjs`) chạy trên máy operator, tóm tắt kết quả trong PR. Bật lại được bằng `gh workflow enable` nếu cần.
+- **Không CI/CD deploy.** Actions validation chỉ chạy khi operator cho phép (ngoại lệ cho đợt 0.5.99). Validation đang active và master giữ check bắt buộc/lịch sử tuyến tính; publish/watch vẫn tắt. Gate image (`node wecat/check.mjs`) chạy trên máy operator, receipt đúng SHA/image. Không bật thêm workflow hoặc đổi bảo vệ nếu chưa được cho phép.
 - **Deploy production thủ công từ máy operator**, không qua GitHub Actions. Sau khi PR merge: chạy gate local với image amd64, `node wecat/ship-image.mjs <host>...` nạp image qua SSH (so image ID với receipt), rồi rollout primary trước, secondary sau, theo [runbook](RUNBOOK.md). Repo không chứa SSH key hay hostname production.
 - Các workflow phát hành của upstream được chặn cho fork để tránh dùng nhầm namespace hoặc quy trình.
 

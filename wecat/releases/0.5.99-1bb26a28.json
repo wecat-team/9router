@@ -1,0 +1,111 @@
+{
+  "schema": 1,
+  "version": "0.5.99",
+  "upstreamCommit": "ce4460ef79382bfddb4aa5fc0ff9f3cb0d5f95a8",
+  "forkCommit": "1bb26a28395bf77bceb6196bca8f8494c1108676",
+  "date": "2026-10-11",
+  "status": "partial-rollout-secondary-blocked",
+  "pullRequest": "https://github.com/wecat-team/9router/pull/10",
+  "validation": {
+    "pullRequestRun": "https://github.com/wecat-team/9router/actions/runs/38022476245",
+    "masterRun": "https://github.com/wecat-team/9router/actions/runs/38022748879",
+    "operatorReceipt": "passed",
+    "criticalTests": 95,
+    "extendedTests": 132,
+    "syntheticUpgradeRollback": "passed",
+    "offlineRealProviderCalls": 0
+  },
+  "image": {
+    "name": "wecat-9router:0.5.99-1bb26a28395b",
+    "id": "sha256:2e3a8604500a30770968743f9ec481a777b38ab494777cecbda2419f2ead1b47",
+    "platform": "linux/amd64",
+    "builtBy": "operator-local-gate",
+    "delivery": "docker save | ssh docker load",
+    "verifiedOnBothHosts": true
+  },
+  "targets": {
+    "primary": {
+      "status": "production-verified",
+      "runningVersion": "0.5.99",
+      "rolloutDate": "2026-10-10",
+      "recheckedDate": "2026-10-11",
+      "apiKeyCount": {
+        "before": 3,
+        "after": 3
+      },
+      "providerConnectionCount": {
+        "before": 6,
+        "after": 6
+      },
+      "keysPreserved": true,
+      "configPreserved": true,
+      "sqliteIntegrity": "ok",
+      "monitorSeconds": 180,
+      "restartCount": 0,
+      "temporaryProxyDrainedAndRemoved": true,
+      "canary": {
+        "status": "passed",
+        "checkedAt": "2026-10-10T05:11:46.870Z",
+        "chat": {
+          "http": 200,
+          "elapsedMs": 3198
+        },
+        "imageWithTwoReferences": {
+          "http": 200,
+          "elapsedMs": 89085,
+          "pngBytes": 984057,
+          "width": 1254,
+          "height": 1254
+        },
+        "realProviderCalls": 2
+      }
+    },
+    "secondary": {
+      "status": "rolled-back-provider-credentials-blocked",
+      "runningVersion": "0.5.95",
+      "shadowAuthAndPreservation": "passed",
+      "candidateCanary": "failed",
+      "rollbackImageAuth": "passed",
+      "baselineChat": {
+        "version": "0.5.95",
+        "http": 503,
+        "canaryToken": false
+      },
+      "preHandoffProviderErrors": {
+        "connections": 6,
+        "http": 401,
+        "classification": "refresh-invalid"
+      },
+      "apiKeyCount": {
+        "before": 1,
+        "after": 1
+      },
+      "providerConnectionCount": {
+        "before": 6,
+        "after": 6
+      },
+      "keysPreserved": true,
+      "configPreserved": true,
+      "sqliteIntegrity": "ok",
+      "restartCount": 0,
+      "gate": {
+        "healthy": true,
+        "held": false,
+        "queued": 0
+      },
+      "newKeyAclEnabled": false,
+      "requiredNextStep": "Operator đăng nhập lại Codex, rồi canary/rollout; không bỏ gate."
+    }
+  },
+  "rollback": {
+    "image": "wecat-9router:0.5.95-556b4a96b8a4",
+    "imageId": "sha256:861dd56514c27816f5f43ae073c83c545e20eb57612c644cdf0f22b3d3ce41af",
+    "oldImageRetainedOnBothHosts": true,
+    "sqliteBackupApiIntegrityVerified": true,
+    "fullVolumeBackupWithWriterStopped": true,
+    "privateConfigBackupsRetained": true,
+    "secondaryImageRollbackPerformed": true,
+    "databaseSnapshotRestored": false,
+    "notes": "DB vẫn integrity ok; rollback image trên volume hiện tại để giữ usage/token mới. Bản 0.5.95 không thực thi ACL mới."
+  }
+}
