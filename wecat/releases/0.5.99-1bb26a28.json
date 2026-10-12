@@ -3,8 +3,8 @@
   "version": "0.5.99",
   "upstreamCommit": "ce4460ef79382bfddb4aa5fc0ff9f3cb0d5f95a8",
   "forkCommit": "1bb26a28395bf77bceb6196bca8f8494c1108676",
-  "date": "2026-10-11",
-  "status": "partial-rollout-secondary-blocked",
+  "date": "2026-10-12",
+  "status": "production-verified",
   "pullRequest": "https://github.com/wecat-team/9router/pull/10",
   "validation": {
     "pullRequestRun": "https://github.com/wecat-team/9router/actions/runs/38022476245",
@@ -61,21 +61,39 @@
       }
     },
     "secondary": {
-      "status": "rolled-back-provider-credentials-blocked",
-      "runningVersion": "0.5.95",
-      "shadowAuthAndPreservation": "passed",
-      "candidateCanary": "failed",
-      "rollbackImageAuth": "passed",
-      "baselineChat": {
+      "status": "production-verified",
+      "runningVersion": "0.5.99",
+      "rolloutDate": "2026-10-12",
+      "previousAttempt": {
+        "date": "2026-10-11",
+        "candidateCanary": "failed",
+        "rolledBackTo": "0.5.95",
+        "baselineChat": {
+          "version": "0.5.95",
+          "http": 503,
+          "canaryToken": false
+        },
+        "preHandoffProviderErrors": {
+          "connections": 6,
+          "http": 401,
+          "classification": "refresh-invalid"
+        }
+      },
+      "reauth": {
+        "date": "2026-10-12",
+        "by": "operator",
+        "providerConnections": 6,
+        "provider": "codex",
+        "testStatus": "active",
+        "credentialsCopiedFromOtherHost": false
+      },
+      "baselineChatAfterReauth": {
         "version": "0.5.95",
-        "http": 503,
-        "canaryToken": false
+        "http": 200,
+        "elapsedMs": 3222,
+        "canaryToken": true
       },
-      "preHandoffProviderErrors": {
-        "connections": 6,
-        "http": 401,
-        "classification": "refresh-invalid"
-      },
+      "shadowAuthAndPreservation": "passed",
       "apiKeyCount": {
         "before": 1,
         "after": 1
@@ -87,14 +105,42 @@
       "keysPreserved": true,
       "configPreserved": true,
       "sqliteIntegrity": "ok",
+      "monitorSeconds": 180,
       "restartCount": 0,
       "gate": {
+        "protocol": "hold-if-idle",
         "healthy": true,
         "held": false,
         "queued": 0
       },
+      "shadowRemoved": true,
       "newKeyAclEnabled": false,
-      "requiredNextStep": "Operator đăng nhập lại Codex, rồi canary/rollout; không bỏ gate."
+      "publicChecks": {
+        "login": 200,
+        "modelsWithoutKey": 401
+      },
+      "canary": {
+        "status": "passed",
+        "checkedAt": "2026-10-12T02:16:17.258Z",
+        "chat": {
+          "http": 200,
+          "elapsedMs": 3704
+        },
+        "imageWithTwoReferences": {
+          "http": 200,
+          "elapsedMs": 96586,
+          "pngBytes": 158644,
+          "width": 1254,
+          "height": 1254
+        },
+        "realProviderCalls": 2,
+        "notes": "Một tài khoản Codex trả 429 ở lượt chat; router fallback sang tài khoản khác và trả 200."
+      },
+      "postRolloutTraffic": {
+        "windowMinutes": 5,
+        "clientImageGenerationsSuccess": 2,
+        "canaryImageGenerationsSuccess": 1
+      }
     }
   },
   "rollback": {
@@ -106,6 +152,6 @@
     "privateConfigBackupsRetained": true,
     "secondaryImageRollbackPerformed": true,
     "databaseSnapshotRestored": false,
-    "notes": "DB vẫn integrity ok; rollback image trên volume hiện tại để giữ usage/token mới. Bản 0.5.95 không thực thi ACL mới."
+    "notes": "Lượt 11/10 secondary rollback image 0.5.95 trên volume hiện tại (DB integrity ok, giữ usage/token mới). Lượt 12/10 đạt, không rollback. Image 0.5.95 vẫn giữ trên cả hai host; 0.5.95 không thực thi ACL mới."
   }
 }

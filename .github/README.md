@@ -6,13 +6,13 @@ Fork này **không phát triển tính năng riêng**. Mục đích là theo sá
 
 ## Tình trạng
 
-> Cập nhật 2026-10-11. Chi tiết và việc còn mở: [wecat/STATUS.md](../wecat/STATUS.md).
+> Cập nhật 2026-10-12. Chi tiết và việc còn mở: [wecat/STATUS.md](../wecat/STATUS.md).
 
 | | |
 |---|---|
 | Upstream | `decolua/9router`, đã đồng bộ **0.5.99**, ghim `upstream/master` [`ce4460ef`](https://github.com/decolua/9router/commit/ce4460ef79382bfddb4aa5fc0ff9f3cb0d5f95a8). |
 | Fork | Upstream cộng với `wecat/` (gate kiểm chứng, runbook, nhật ký sự cố). `master` chỉ nhận qua PR, gate chạy trên máy operator. |
-| Production | primary **0.5.99**, canary/monitor đạt; secondary rollback về **0.5.95**, cần đăng nhập lại Codex trước canary/rollout tiếp. Key/cấu hình và backup/image rollback giữ nguyên. |
+| Production | primary và secondary đều chạy **0.5.99** từ cùng image fork (`wecat-9router:0.5.99-1bb26a28395b`), canary/monitor đạt (primary 10/10, secondary 12/10 sau khi đăng nhập lại Codex). Key/cấu hình giữ nguyên; image 0.5.95 và backup giữ làm rollback. |
 | Phát hành | Actions validation chỉ khi operator cho phép (đã cho phép đợt 0.5.99). Gate image chạy trên máy operator; deploy thủ công qua SSH, không qua registry/Actions. |
 
 ## Khác gì upstream
