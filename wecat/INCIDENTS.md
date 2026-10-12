@@ -19,6 +19,11 @@ W-001…W-012 đến từ đợt nâng 0.5.91 → 0.5.95 ngày 01/10/2026; mục
 | W-014 | (04/10/2026) Lần chạy publish đầu tiên đỏ ở browser smoke: `page.goto(..., networkidle)` quá 30s, trong khi gate trên master cùng commit vẫn xanh. Dashboard có request giữ kết nối nên "network idle" không ổn định | Chờ đúng response `GET /api/providers` của trang rồi mới kiểm lỗi JS | Container smoke; publish chạy lại gate đầy đủ |
 | W-013 | (Local, 23/09/2026) Dev server và container dùng chung một thư mục dữ liệu, nên hai background refresher cùng refresh tài khoản Codex. Refresh token bị xoay vòng làm lỗi `refresh_token_reused`/`invalidated`, nhiều tài khoản phải đăng nhập lại | Mỗi instance một `DATA_DIR` riêng; shadow/candidate đặt `DISABLE_BACKGROUND_TOKEN_REFRESH=true` | Gate chạy với DATA_DIR tạm và tắt refresh; RUNBOOK bước 1–2; hướng dẫn local ở `.github/README.md` |
 
+## Rollout ngày 11–12/10/2026
+
+- **W-015 (vận hành, đã đối chứng):** gate secondary đang deploy chỉ có `/hold-if-idle`, không có `/hold`. Lượt đầu dừng trước handoff; router cũ/gate vẫn healthy. Đọc protocol image hiện hữu rồi dùng hold-if-idle, không thay gate/Caddy. Chỉ retry khi busy 409; lỗi điều khiển khác phải fail-closed.
+- **W-016 (fixed, validated 12/10/2026):** canary 0.5.99 không đạt; tự rollback về 0.5.95 và resume gate. Backup boundary trước handoff đã có sáu provider Codex refresh-invalid/401; đối chứng chat 0.5.95 cũng 503. API key/settings/proxy và SQLite vẫn nguyên. Chỉ một container mount volume router production; shadow đã dọn và đã tắt background refresh khi chạy. Xử lý: operator đăng nhập lại sáu OAuth Codex trên chính secondary (không chép credential từ host khác); đối chứng 0.5.95 chat 200, rồi rollout lại 0.5.99 đạt canary chat + PNG hai reference và monitor 180 s. Kết luận: lỗi do credential, không phải regression của 0.5.99. Nguyên nhân token invalid trước đó chưa xác định. Bài học: health/auth 200 không chứng minh inference, luôn đối chứng chat trên bản đang chạy trước khi coi là regression.
+
 ## Khi phát hiện lỗi mới
 
 Mở issue theo template **WeCat build / regression**, kèm SHA/image digest, stage, lệnh tái hiện và CI artifact đã lọc. Tái hiện trước khi sửa; thêm regression test và mutation/đối chứng nếu phù hợp. Ghi `open`, `fixed`, `validated` khác nhau; chưa có chứng cứ thì không ghi “đã hết lỗi”. Không sửa allowlist known-fails để làm CI xanh.
