@@ -17,7 +17,7 @@ Dùng tên vai trò `primary` và `secondary`; hostname/SSH identity/secret th�
 - Đọc INCIDENTS; xác định model WeCat đang sử dụng và khác biệt từ release trước.
 - Có backup SQLite được tạo bằng SQLite backup API, chạy `integrity_check`, quyền 600; backup cấu hình trong thư mục quyền 700. Giữ image cũ và bí mật hiện tại.
 - Khóa rollout toàn host, không đồng thời với rollout app khác.
-- **Khung giờ:** primary chỉ rollout trong 00:00–07:00 giờ VN, khi 30 phút trước đó có dưới khoảng 50 request, cho đến khi gate tạm được sửa (W-017). Secondary rollout lúc ít traffic là đủ, vì gate cố định giữ ở thời điểm rảnh.
+- **Khung giờ:** primary rollout trong 00:00–07:00 giờ VN, khi 30 phút trước đó có dưới khoảng 50 request. Gate đã thả hàng đợi theo nhịp (W-017), nhưng chưa được kiểm bằng rollout thật giờ cao điểm. Secondary rollout lúc ít traffic là đủ, vì gate cố định giữ ở thời điểm rảnh.
 - Trước khi chạy: `dmesg` không có `TCP: out of memory` mới; TCP mem trong `/proc/net/sockstat` thấp hơn nhiều so với ngưỡng pressure của `net.ipv4.tcp_mem`; không còn gate tạm hay shadow cũ; cổng gate tạm còn trống.
 
 ## Quy trình mỗi host
@@ -50,10 +50,24 @@ Cả hai host dùng cùng một script handoff của operator. Script nằm tron
 - **secondary** (stack ứng dụng có router-gate cố định): dùng `POST /hold-if-idle` (gate đang deploy không có `/hold`) và retry đến khi rảnh. Sau đó đổi `ROUTER_IMAGE` trong env của stack và `up -d` riêng service router; Caddy và gate không đổi. Backup nằm trong bộ rollout, ngoài cây deploy của ứng dụng.
 - Script tự rollback image cũ trên volume hiện tại nếu canary, health hoặc monitor lỗi; schema không đổi thì không restore DB.
 
-### Giới hạn của gate tạm trên primary (W-017)
+### Gate (`wecat/ops/gate.mjs`) và W-017
 
-- Khi resume, gate tạm thả **cả hàng đợi cùng lúc**. Giờ cao điểm, giữ khoảng 3 phút đã dồn 74–146 request ảnh, làm kernel hết bộ nhớ TCP (host 3,9 GB RAM), kéo theo `ETIMEDOUT` tới Codex và khóa toàn bộ tài khoản theo model.
-- Request đã mất client không được trừ khỏi `active`, nên gate có thể kẹt và script giữ lại gate (`TEMPORARY_GATE_PASSTHROUGH_RETAINED_FOR_DRAIN`). Trước khi gỡ tay: nginx đã trỏ về router, `ss -tn state established "( dport = :<cổng gate> )"` không còn peer nào. Sau đó mới `docker stop` và `docker rm` gate tạm.
+Lượt 16/10 lúc 10:20 giờ VN: gate tạm thả **cả hàng đợi cùng lúc** sau khi giữ traffic khoảng 3 phút giờ cao điểm. 74–146 request ảnh chạy song song làm kernel hết bộ nhớ TCP (host 3,9 GB RAM), dẫn tới `ETIMEDOUT` tới Codex và khóa toàn bộ tài khoản theo model. Gate còn giữ 42 request mà client đã bỏ.
+
+Từ bản gate có các thay đổi dưới đây (cấu hình qua env khi chạy gate tạm; giá trị 0 là tắt giới hạn tương ứng):
+
+| Env | Mặc định | Tác dụng |
+|---|---|---|
+| `ROUTER_GATE_RESUME_BATCH` | 4 | Số request thả mỗi nhịp sau `/resume` |
+| `ROUTER_GATE_RESUME_INTERVAL_MS` | 1000 | Khoảng cách giữa các nhịp |
+| `ROUTER_GATE_RESUME_MAX_ACTIVE` | 64 | Không thả thêm khi `active` đã chạm mức này |
+| `ROUTER_GATE_UPSTREAM_IDLE_TIMEOUT_MS` | 600000 | Hủy request mà upstream không gửi byte nào quá lâu (dài hơn timeout ảnh 300 s của app) |
+
+- Trong lúc xả hàng đợi, request mới xếp sau, không vượt hàng; `queued` gồm cả request đang chờ thả. 100 request tồn được thả hết trong khoảng 25 giây.
+- Client đóng kết nối (kể cả half-close/FIN) khi đang xếp hàng hay đang chạy thì gate bỏ request, hủy upstream và trả `active` về đúng.
+- Bộ rollout trên host chép `gate.mjs` từ commit phát hành: lượt sau phải chép bản mới. Gate cố định của secondary thuộc repo ứng dụng, không đổi.
+- **Chưa kiểm bằng rollout thật giờ cao điểm.** Cho đến khi có một lượt như vậy đạt, vẫn ưu tiên khung 00:00–07:00 giờ VN cho primary.
+- Gate vẫn kẹt (script báo `TEMPORARY_GATE_PASSTHROUGH_RETAINED_FOR_DRAIN`): kiểm nginx đã trỏ về router và `ss -tn state established "( dport = :<cổng gate> )"` không còn peer, rồi mới `docker stop`/`docker rm` gate tạm.
 - Mức nền khi đánh giá: primary có `ETIMEDOUT` rải rác (khoảng 10–15 lần mỗi giờ) ngay cả khi không rollout. Chỉ coi là sự cố khi vượt mức này hoặc có `all … accounts locked`.
 
 ## Canary thật
