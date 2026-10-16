@@ -53,7 +53,7 @@ Lưu ý vận hành:
 
 1. **`docker-compose.yml` của upstream trỏ `decolua/9router:latest`.** Không dùng file này cho production WeCat. Giữ nguyên vì là file upstream.
 2. **Gate tạm của script primary (W-017).** Thả cả hàng đợi một lúc và không trừ request đã mất client. Chưa sửa thì primary chỉ rollout trong 00:00–07:00 giờ VN ([RUNBOOK](RUNBOOK.md)); tăng `tcp_mem` cần operator duyệt riêng.
-3. **Squash merge làm mất tổ tiên upstream.** Lần nâng sau `prepare-upstream` sẽ gặp conflict lặp lại; xử lý theo quy trình trong [README](README.md#theo-dõi-upstream). Muốn hết hẳn thì phải cho phép merge commit cho PR nâng upstream (đổi bảo vệ `master`, cần operator quyết) hoặc sửa script áp diff thay vì merge.
+3. **Squash merge làm mất tổ tiên upstream.** `prepare-upstream` tự áp diff khi `master` không chứa upstream đã chấp nhận, và chặn cây lệch upstream ngoài file fork ([README](README.md#theo-dõi-upstream)). Dựng lại lần 0.5.99 → 0.5.104: 0 conflict. Sẽ dùng thật ở lần nâng kế tiếp.
 4. **Script rollout không có trong repo.** `operator-rollout.py` chỉ nằm trong bộ rollout trên host (chứa đường dẫn và tên container của từng host); RUNBOOK mô tả cách dùng và các mốc log.
 
 ## Lịch sử

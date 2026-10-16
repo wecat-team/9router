@@ -3,6 +3,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { execFileSync } from 'node:child_process';
 import { run, sha256 } from './release.mjs';
 
 export const UPSTREAM_URL = 'https://github.com/decolua/9router.git';
@@ -18,6 +19,26 @@ export const RISK_RULES = [
   { id: 'token-refresh', match: f => /token-?refresh|tokenRefresh/i.test(f), note: 'Token refresh đổi: chú ý không để hai writer cùng refresh tài khoản khi rollout.' },
   { id: 'workflows', match: f => f.startsWith('.github/workflows/'), note: 'Workflow upstream đổi: workflow phát hành của upstream phải còn guard `github.repository == decolua/9router`.' },
 ];
+
+// File fork sở hữu ngoài wecat/ và .github/. Mọi file khác phải giống hệt upstream đã chấp nhận.
+// Đổi danh sách này thì cập nhật wecat/README.md (mục Theo dõi upstream) trong cùng PR.
+export const FORK_DIRS = ['wecat/', '.github/'];
+export const FORK_OWNED_FILES = [
+  '.dockerignore',
+  '.gitignore',
+  'AGENTS.md',
+  'CLAUDE.md',
+  'tests/unit/codex-refresh-token.test.js',
+];
+
+export function isForkOwned(file) {
+  return FORK_DIRS.some(dir => file.startsWith(dir)) || FORK_OWNED_FILES.includes(file);
+}
+
+// File khác upstream mà không thuộc fork: auto-merge trộn sai hoặc fork sửa ngoài vùng của mình.
+export function forkDrift(files) {
+  return files.filter(file => file && !isForkOwned(file));
+}
 
 export function parseVersion(tag) {
   const m = /^v?(\d+)\.(\d+)\.(\d+)$/.exec(String(tag).trim());
@@ -53,7 +74,7 @@ export function updatedValidation(config, { commit, version, manifests }) {
   };
 }
 
-export function formatReport({ fromVersion, toVersion, fromCommit, toCommit, commits, files, risks, locksRegenerated = [] }) {
+export function formatReport({ fromVersion, toVersion, fromCommit, toCommit, commits, files, risks, locksRegenerated = [], mode = 'merge' }) {
   const lines = [
     `## Upstream ${fromVersion} → ${toVersion}`,
     '',
@@ -61,6 +82,7 @@ export function formatReport({ fromVersion, toVersion, fromCommit, toCommit, com
     `- So sánh: https://github.com/decolua/9router/compare/${fromCommit.slice(0, 12)}...${toCommit.slice(0, 12)}`,
     `- ${commits} commit, ${files} file thay đổi`,
   ];
+  if (mode === 'diff') lines.push(`- Cách áp: diff \`${fromCommit.slice(0, 12)}..${toCommit.slice(0, 12)}\` (master không có tổ tiên upstream vì PR nâng upstream được squash merge)`);
   if (locksRegenerated.length) lines.push(`- Lockfile đã tạo lại: ${locksRegenerated.join(', ')}`);
   lines.push('', '### Cần review');
   if (!risks.length) lines.push('', 'Không chạm vùng WeCat phụ thuộc trực tiếp. Gate vẫn phải đạt trước khi phát hành.');
@@ -123,5 +145,36 @@ export function regenerateLock(manifest, lock) {
     fs.copyFileSync(path.join(dir, 'package-lock.json'), lock);
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+export function isAncestor(commit, of = 'HEAD', cwd) {
+  try {
+    execFileSync('git', ['merge-base', '--is-ancestor', commit, of], { cwd, stdio: 'ignore' });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// File khác `commit` (gồm index và working tree) mà không thuộc fork.
+export function treeDrift(commit, cwd) {
+  const files = run('git', ['diff', '--name-only', commit, '--', '.', ...FORK_DIRS.map(dir => ':!' + dir)], { cwd });
+  return forkDrift(files.split('\n'));
+}
+
+// Áp thay đổi upstream from..to lên working tree như một commit thường. Dùng khi squash merge làm
+// master mất tổ tiên upstream: merge-base cũ sinh conflict giả ở mọi file upstream đã sửa lại.
+// Trả về danh sách file conflict (rỗng nếu áp sạch); conflict để nguyên marker cho operator xử lý.
+export function applyUpstreamDiff(from, to, cwd) {
+  const patch = execFileSync('git', ['diff', '--binary', '--full-index', from, to], { cwd, maxBuffer: 512 * 1024 * 1024 });
+  if (!patch.length) return [];
+  try {
+    execFileSync('git', ['apply', '--3way', '--index', '--whitespace=nowarn'], { cwd, input: patch, stdio: ['pipe', 'pipe', 'pipe'], maxBuffer: 64 * 1024 * 1024 });
+    return [];
+  } catch (error) {
+    const conflicts = run('git', ['diff', '--name-only', '--diff-filter=U'], { cwd }).split('\n').filter(Boolean);
+    if (!conflicts.length) throw Error('git apply thất bại: ' + String(error.stderr || error.message).slice(0, 500));
+    return conflicts;
   }
 }
