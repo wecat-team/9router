@@ -14,6 +14,7 @@ Cập nhật: **2026-10-16** (23:30 giờ VN). Đây là nơi duy nhất ghi "đ
 - Upstream gỡ `gpt-5.5`, `gpt-5.5-review`, `gpt-5.5-image`, `gpt-5.3-image` khỏi catalog Codex. Request tới các model này vẫn được chuyển lên upstream (đã test offline), chỉ mất khỏi `/v1/models`/dashboard; upstream coi `gpt-5.5` là model đã ngừng. app.wecat.vn đã chuyển cấu hình sang model 5.6 trước đợt nâng; contract giữ kiểm tra passthrough cho `gpt-5.5-image`.
 - Ảnh dạng tool (`gpt-image-*`) đổi model điều phối `gpt-5.5` → `gpt-5.6-sol`. Contract kiểm tool model giữ nguyên và model điều phối còn trong catalog; canary thật chạy thêm `gpt-image-2` (primary) hoặc `gpt-image-2.5-sunburst` (secondary), song song với ảnh luna để không kéo dài thời gian giữ gate. Canary dùng 3 lượt gọi thật.
 - `/v1/models` liệt kê thêm provider miễn phí không cần auth (opencode, …); khả năng gọi đã có từ 0.5.99. ACL theo key vẫn không bật.
+- Danh sách model Codex theo catalog 0.5.104 và đối chiếu với app: [MODELS](MODELS.md).
 
 ## Fork
 
@@ -46,12 +47,14 @@ Lưu ý vận hành:
 
 - Image chỉ có trên host, không có trong registry. Vì vậy `docker compose pull` toàn stack trên secondary sẽ lỗi ở service router. Script deploy của ứng dụng chỉ pull `api web worker backup`, nên không bị ảnh hưởng.
 - Health/auth 200 không chứng minh inference tốt: lượt 11/10 secondary healthy nhưng chat 503 vì credential. Luôn đối chứng chat trên bản đang chạy trước khi kết luận regression. Chỉ một container mount volume router production; shadow đã dọn.
-- Lượt 0.5.99 trên secondary dùng script handoff riêng của operator (backup → shadow → `hold-if-idle` → đổi `ROUTER_IMAGE` → canary → monitor → tự rollback), không dùng bản `deploy-router.sh` cho image local như lượt 0.5.95. RUNBOOK mục secondary vẫn mô tả cách cũ; cần thống nhất trước đợt sau.
+- Từ 0.5.99, cả hai host rollout bằng cùng script handoff của operator; RUNBOOK mục *Lệnh theo vai trò* mô tả quy trình và các mốc log.
 
 ## Còn mở
 
 1. **`docker-compose.yml` của upstream trỏ `decolua/9router:latest`.** Không dùng file này cho production WeCat. Giữ nguyên vì là file upstream.
-2. **Gate tạm của script primary (W-017).** Thả cả hàng đợi một lúc và không trừ request đã mất client. Đợt sau: rollout primary ngoài giờ cao điểm hoặc sửa gate trước; tăng `tcp_mem` cần operator duyệt riêng.
+2. **Gate tạm của script primary (W-017).** Thả cả hàng đợi một lúc và không trừ request đã mất client. Chưa sửa thì primary chỉ rollout trong 00:00–07:00 giờ VN ([RUNBOOK](RUNBOOK.md)); tăng `tcp_mem` cần operator duyệt riêng.
+3. **Squash merge làm mất tổ tiên upstream.** Lần nâng sau `prepare-upstream` sẽ gặp conflict lặp lại; xử lý theo quy trình trong [README](README.md#theo-dõi-upstream). Muốn hết hẳn thì phải cho phép merge commit cho PR nâng upstream (đổi bảo vệ `master`, cần operator quyết) hoặc sửa script áp diff thay vì merge.
+4. **Script rollout không có trong repo.** `operator-rollout.py` chỉ nằm trong bộ rollout trên host (chứa đường dẫn và tên container của từng host); RUNBOOK mô tả cách dùng và các mốc log.
 
 ## Lịch sử
 

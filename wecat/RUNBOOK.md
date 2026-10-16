@@ -4,7 +4,7 @@ Dùng tên vai trò `primary` và `secondary`; hostname/SSH identity/secret th�
 
 ## Điều kiện phát hành
 
-- PR đã review và merge vào `master`; gate chạy trên máy operator (không dùng CI).
+- PR đã review và merge vào `master`. Check bắt buộc `WeCat release gate` (Actions validation) phải đạt trên PR; gate phát hành image vẫn chạy trên máy operator.
 - Deploy **thủ công từ máy operator**, không qua GitHub Actions hay registry. Trên checkout sạch của commit đó, chạy gate với image amd64 (giống kiến trúc hai host), rồi nạp image sang từng host:
 
   ```sh
@@ -17,6 +17,8 @@ Dùng tên vai trò `primary` và `secondary`; hostname/SSH identity/secret th�
 - Đọc INCIDENTS; xác định model WeCat đang sử dụng và khác biệt từ release trước.
 - Có backup SQLite được tạo bằng SQLite backup API, chạy `integrity_check`, quyền 600; backup cấu hình trong thư mục quyền 700. Giữ image cũ và bí mật hiện tại.
 - Khóa rollout toàn host, không đồng thời với rollout app khác.
+- **Khung giờ:** primary chỉ rollout trong 00:00–07:00 giờ VN, khi 30 phút trước đó có dưới khoảng 50 request, cho đến khi gate tạm được sửa (W-017). Secondary rollout lúc ít traffic là đủ, vì gate cố định giữ ở thời điểm rảnh.
+- Trước khi chạy: `dmesg` không có `TCP: out of memory` mới; TCP mem trong `/proc/net/sockstat` thấp hơn nhiều so với ngưỡng pressure của `net.ipv4.tcp_mem`; không còn gate tạm hay shadow cũ; cổng gate tạm còn trống.
 
 ## Quy trình mỗi host
 
@@ -32,8 +34,27 @@ Dùng tên vai trò `primary` và `secondary`; hostname/SSH identity/secret th�
 
 ### Lệnh theo vai trò
 
-- **primary** (compose một service, không có gate): kiểm không còn kết nối tới cổng router, `docker compose stop`, backup volume khi đã dừng, đổi `image:` trong compose sang `wecat-9router:<version>-<sha12>` (`pull_policy: never`), `docker compose up -d`. So số API key/provider và `integrity_check` trước và sau. Rollback: trả compose cũ rồi `up -d`.
-- **secondary** (stack ứng dụng có router-gate): chạy script rollout của repo ứng dụng với tên image local, bằng user `deploy`. Script lo backup, shadow clone, giữ gate, đổi container, canary, theo dõi và tự khôi phục. Bản dùng cho image local chỉ khác bản gốc hai điểm: nhận tên `wecat-9router:<version>-<sha12>`, và chỉ pull khi image chưa có trên host. Kiểm protocol image gate hiện hữu: bản đang deploy chỉ có `hold-if-idle`, không giả định có `hold`. Chỉ retry busy 409, lỗi khác dừng. Backup riêng phải ở thư mục được loại khỏi rsync deploy ứng dụng hoặc ngoài cây checkout.
+Cả hai host dùng cùng một script handoff của operator. Script nằm trong bộ rollout trên host, **không có trong repo** vì chứa đường dẫn và tên container của từng host.
+
+- Bộ rollout: `/root/wecat-rollout-<version>-<YYYYMMDD>/` trên mỗi host, gồm `operator-rollout.py`, `operator-db.cjs` (chỉ xuất số lượng/fingerprint, không xuất credential), `gate.mjs` (= `wecat/ops/gate.mjs`), `fixtures.mjs` và `live-canary.mjs` (chép từ commit phát hành).
+- Mỗi release: chép bộ của lượt trước rồi đổi version trong `operator-rollout.py` (version đích, version đang chạy và tên thư mục backup), sau đó so md5 giữa hai host. Không sửa logic trong lúc rollout.
+- Chạy bằng root, tách khỏi phiên SSH để rớt SSH không cắt ngang handoff:
+
+  ```sh
+  cd /root/wecat-rollout-<version>-<YYYYMMDD>
+  nohup setsid python3 operator-rollout.py <primary|secondary> wecat-9router:<version>-<sha12> <image-id> <fork-commit> > <role>.log 2>&1 < /dev/null &
+  ```
+
+- Các mốc trong log: `backup-integrity-ok` → `SHADOW_AUTH_CONFIG_PRESERVATION_PASSED` → `GATE_HELD_BACKUP_VERIFIED_STOPPING_OLD_WRITER` → `LIVE_CANARY_START` → kết quả canary → `TRAFFIC_RESUMED_MONITOR_180_SECONDS` → `Monitor passed …` → `ROLLOUT_PASSED`. Khi lỗi: `ROLLOUT_FAILED` → `ROLLBACK_IMAGE_AUTH_PASSED`.
+- **primary** (compose một service, không có gate cố định): script dựng gate tạm `operator-router-gate-<stamp>` trên host network, chuyển `proxy_pass` của nginx sang gate, rồi `POST /hold` và chờ `active=0`. Sau đó đổi `image:` trong compose và `up -d`. Khi xong, nó trả nginx về router và gỡ gate tạm khi `active+queued=0`; backup nằm ở `/opt/9router/operator-<version>-<stamp>/`.
+- **secondary** (stack ứng dụng có router-gate cố định): dùng `POST /hold-if-idle` (gate đang deploy không có `/hold`) và retry đến khi rảnh. Sau đó đổi `ROUTER_IMAGE` trong env của stack và `up -d` riêng service router; Caddy và gate không đổi. Backup nằm trong bộ rollout, ngoài cây deploy của ứng dụng.
+- Script tự rollback image cũ trên volume hiện tại nếu canary, health hoặc monitor lỗi; schema không đổi thì không restore DB.
+
+### Giới hạn của gate tạm trên primary (W-017)
+
+- Khi resume, gate tạm thả **cả hàng đợi cùng lúc**. Giờ cao điểm, giữ khoảng 3 phút đã dồn 74–146 request ảnh, làm kernel hết bộ nhớ TCP (host 3,9 GB RAM), kéo theo `ETIMEDOUT` tới Codex và khóa toàn bộ tài khoản theo model.
+- Request đã mất client không được trừ khỏi `active`, nên gate có thể kẹt và script giữ lại gate (`TEMPORARY_GATE_PASSTHROUGH_RETAINED_FOR_DRAIN`). Trước khi gỡ tay: nginx đã trỏ về router, `ss -tn state established "( dport = :<cổng gate> )"` không còn peer nào. Sau đó mới `docker stop` và `docker rm` gate tạm.
+- Mức nền khi đánh giá: primary có `ETIMEDOUT` rải rác (khoảng 10–15 lần mỗi giờ) ngay cả khi không rollout. Chỉ coi là sự cố khi vượt mức này hoặc có `all … accounts locked`.
 
 ## Canary thật
 
@@ -43,7 +64,7 @@ Dùng tên vai trò `primary` và `secondary`; hostname/SSH identity/secret th�
 node wecat/live-canary.mjs --allow-live
 ```
 
-Tối đa hai request: chat 32 tokens, ảnh 1024 low với hai reference PNG 128×128 có CRC/IDAT hợp lệ. Report chỉ chứa target role, status, thời gian, kích thước ảnh; không chứa key, prompt, output image hoặc tài khoản. Không paste `.env`, response token hay cookie lên GitHub.
+Ba request: chat 32 tokens, rồi song song hai ảnh 1024 low, mỗi ảnh có hai reference PNG 128×128 có CRC/IDAT hợp lệ: `gpt-5.6-luna-image` và ảnh dạng tool (`gpt-image-2` ở primary, `gpt-image-2.5-sunburst` ở secondary). Report chỉ chứa target role, status, thời gian, kích thước ảnh; không chứa key, prompt, output image hoặc tài khoản. Không paste `.env`, response token hay cookie lên GitHub.
 
 ## Rollback
 

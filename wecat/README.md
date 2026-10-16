@@ -47,6 +47,15 @@ node wecat/prepare-upstream.mjs --pr      # mặc định lấy tag upstream m�
 3. Cập nhật commit, version và hash manifest trong `wecat/validation.json`.
 4. Commit kèm báo cáo, push và mở PR với mục **Cần review**: patch IP, SQLite, dependency, Dockerfile, đường sinh ảnh, token refresh, workflow.
 
+**PR nâng upstream được squash merge** (bảo vệ `master` bắt lịch sử tuyến tính), nên `master` không chứa commit upstream làm tổ tiên. Merge-base khi nâng lần sau vẫn là bản cuối từng merge thật (`v0.5.95`), vì vậy `prepare-upstream` sẽ gặp conflict ở các file upstream đã sửa lại sau đó. Lần 0.5.104 có 19 file. Cách xử lý lặp lại được:
+
+1. Fork chỉ sở hữu `wecat/`, `.github/` và các file sau ngoài hai thư mục đó: `.dockerignore`, `.gitignore`, `AGENTS.md`, khối WeCat đầu `CLAUDE.md`, `tests/unit/codex-refresh-token.test.js` (cửa sổ refresh Codex 10 phút).
+2. Conflict ở file không thuộc danh sách trên thì lấy nguyên bản upstream: `git checkout --theirs -- <file>`. Conflict ở file thuộc fork thì sửa tay.
+3. Bước bắt buộc: `git diff --stat <upstream-commit> -- . ':!wecat' ':!.github'` chỉ được liệt kê các file của fork ở mục 1. Có file khác là auto-merge đã trộn sai: lấy lại bản upstream của file đó (`git checkout <upstream-commit> -- <file>`).
+4. Chạy tiếp phần còn lại của script bằng tay: tạo lại lock nếu manifest đổi, cập nhật `wecat/validation.json`, ghi báo cáo. Ghi số conflict và cách xử lý vào PR.
+
+Nếu đổi danh sách file của fork ở mục 1, cập nhật đoạn này trong cùng PR.
+
 Nếu merge có conflict, script dừng và giữ nguyên trạng thái để xử lý tay. Script không bao giờ push `master` hay deploy. Thêm `--no-commit` để review trước khi commit, hoặc bỏ `--pr` để chỉ commit local. Nếu có mục `dockerfile`, chép thay đổi cần thiết của `Dockerfile` upstream sang `wecat/Dockerfile`. Báo cáo cũng được lưu ở `wecat/.reports/upstream-<version>.md`.
 
 Không có job theo dõi tự động: thỉnh thoảng chạy `node wecat/upstream-status.mjs` (chỉ đọc). Workflow *WeCat upstream watch* vẫn còn file nhưng đã tắt. Sau khi merge, cập nhật [STATUS](STATUS.md).
@@ -55,7 +64,7 @@ Không tự đưa các lỗi test mới vào `known-fails`. Suite đầy đủ c
 
 ## Phát hành và production
 
-- **Không CI/CD deploy.** Actions validation chỉ chạy khi operator cho phép (ngoại lệ cho đợt 0.5.99). Validation đang active và master giữ check bắt buộc/lịch sử tuyến tính; publish/watch vẫn tắt. Gate image (`node wecat/check.mjs`) chạy trên máy operator, receipt đúng SHA/image. Không bật thêm workflow hoặc đổi bảo vệ nếu chưa được cho phép.
+- **Không CI/CD deploy.** Workflow *WeCat validation* đang active và là check bắt buộc của PR vào `master` (kèm lịch sử tuyến tính); các workflow publish/watch vẫn tắt. Commit chỉ sửa tài liệu có thể dùng `[skip ci]`, nhưng trước khi merge cần một commit không có `[skip ci]` để check chạy. Gate image (`node wecat/check.mjs`) chạy trên máy operator, receipt đúng SHA/image. Không bật thêm workflow hoặc đổi bảo vệ nếu chưa được cho phép.
 - **Deploy production thủ công từ máy operator**, không qua GitHub Actions. Sau khi PR merge: chạy gate local với image amd64, `node wecat/ship-image.mjs <host>...` nạp image qua SSH (so image ID với receipt), rồi rollout primary trước, secondary sau, theo [runbook](RUNBOOK.md). Repo không chứa SSH key hay hostname production.
 - Các workflow phát hành của upstream được chặn cho fork để tránh dùng nhầm namespace hoặc quy trình.
 
