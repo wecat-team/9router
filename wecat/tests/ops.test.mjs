@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import http from 'node:http';
+import net from 'node:net';
 import { createRequire } from 'node:module';
 import { patchIp } from '../patch-ip.mjs';
 import { assertReceipt, redact, requireLocalUrl } from '../release.mjs';
@@ -70,6 +71,73 @@ test('canary thật phải có chấp thuận rõ và không nhận URL chứa c
  await assert.rejects(liveCanary({baseUrl:'https://example.invalid/v1',apiKey:'test'}),/allow-live/);
  await assert.rejects(liveCanary({baseUrl:'http://example.invalid/v1',apiKey:'test',allowLive:true}),/HTTPS/);
  await assert.rejects(liveCanary({baseUrl:'https://user:pass@example.invalid/v1',apiKey:'test',allowLive:true}),/credential/);
+});
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+async function until(check,ms=2000){const end=Date.now()+ms;while(Date.now()<end){if(check())return true;await wait(10);}return check();}
+async function gateFor(upstream,options){
+ const gate=createRouterGate({target:`http://127.0.0.1:${upstream.address().port}`,publicHost:'127.0.0.1',publicPort:0,adminPort:0,logger:{info(){}},...options});
+ const a=await gate.listen();return {gate,base:`http://127.0.0.1:${a.publicAddress.port}`,admin:`http://127.0.0.1:${a.adminAddress.port}`,port:a.publicAddress.port};
+}
+// Gửi request rồi đóng chiều gửi (FIN) như nginx khi client hủy; socket vẫn half-open.
+function halfClose(port,path){const socket=net.connect(port,'127.0.0.1');socket.on('error',()=>{});socket.on('data',()=>{});socket.write(`GET ${path} HTTP/1.1\r\nHost: gate\r\n\r\n`,()=>socket.end());return socket;}
+test('resume thả hàng đợi theo nhịp, giữ thứ tự và request mới xếp sau',async()=>{
+ const arrivals=[];const upstream=http.createServer((req,res)=>{arrivals.push({path:req.url,at:Date.now()});res.end('ok')});await new Promise(r=>upstream.listen(0,'127.0.0.1',r));
+ const {gate,base,admin}=await gateFor(upstream,{resumeBatch:2,resumeIntervalMs:100,resumeMaxActive:0});
+ try{
+  await fetch(admin+'/hold',{method:'POST'});
+  const queued=[0,1,2,3,4,5].map(i=>fetch(base+'/q'+i).then(r=>r.text()));
+  assert.ok(await until(()=>gate.status().queued===6));
+  const t0=Date.now();await fetch(admin+'/resume',{method:'POST'});
+  const late=fetch(base+'/late').then(r=>r.text());
+  await Promise.all([...queued,late]);
+  assert.deepEqual(arrivals.map(x=>x.path),['/q0','/q1','/q2','/q3','/q4','/q5','/late']);
+  assert.ok(arrivals.slice(0,2).every(x=>x.at-t0<80),'đợt đầu thả ngay');
+  assert.ok(arrivals[5].at-t0>=180,'sáu request phải trải qua ít nhất ba đợt');
+  assert.deepEqual(gate.status(),{held:false,active:0,queued:0});
+ }finally{await gate.close();await new Promise(r=>upstream.close(r));}
+});
+test('khi xả hàng đợi không vượt giới hạn active',async()=>{
+ const pending=[];let current=0,peak=0;
+ const upstream=http.createServer((req,res)=>{current++;peak=Math.max(peak,current);res.on('finish',()=>current--);pending.push(res)});await new Promise(r=>upstream.listen(0,'127.0.0.1',r));
+ const {gate,base,admin}=await gateFor(upstream,{resumeBatch:0,resumeIntervalMs:20,resumeMaxActive:2});
+ try{
+  await fetch(admin+'/hold',{method:'POST'});
+  const queued=[0,1,2,3,4].map(i=>fetch(base+'/m'+i).then(r=>r.text()));
+  assert.ok(await until(()=>gate.status().queued===5));
+  await fetch(admin+'/resume',{method:'POST'});
+  assert.ok(await until(()=>pending.length===2));await wait(80);assert.equal(pending.length,2);
+  pending.shift().end('ok');assert.ok(await until(()=>pending.length===2&&current===2));
+  while(pending.length||gate.status().queued){if(pending.length)pending.shift().end('ok');await wait(30);}
+  await Promise.all(queued);assert.equal(peak,2);assert.deepEqual(gate.status(),{held:false,active:0,queued:0});
+ }finally{await gate.close();await new Promise(r=>upstream.close(r));}
+});
+test('client half-close khi request đang chạy: hủy upstream và trả active về 0',async()=>{
+ let received=false,upstreamClosed=false;const upstream=http.createServer((req,res)=>{received=true;res.on('close',()=>{upstreamClosed=true})});await new Promise(r=>upstream.listen(0,'127.0.0.1',r));
+ const {gate,port}=await gateFor(upstream,{});
+ try{
+  const socket=net.connect(port,'127.0.0.1');socket.on('error',()=>{});socket.on('data',()=>{});socket.write('GET /slow HTTP/1.1\r\nHost: gate\r\n\r\n');
+  assert.ok(await until(()=>received&&gate.status().active===1),'request phải tới upstream trước');
+  socket.end();
+  assert.ok(await until(()=>upstreamClosed),'upstream phải bị hủy');
+  assert.ok(await until(()=>gate.status().active===0),'active không được kẹt');socket.destroy();
+ }finally{await gate.close();await new Promise(r=>upstream.close(r));}
+});
+test('client half-close khi đang xếp hàng: bỏ khỏi hàng đợi, không gọi upstream sau resume',async()=>{
+ let calls=0;const upstream=http.createServer((req,res)=>{calls++;res.end('ok')});await new Promise(r=>upstream.listen(0,'127.0.0.1',r));
+ const {gate,admin,port}=await gateFor(upstream,{});
+ try{
+  await fetch(admin+'/hold',{method:'POST'});const socket=halfClose(port,'/gone');
+  assert.ok(await until(()=>gate.status().queued===0),'request đã mất client phải rời hàng đợi');
+  await fetch(admin+'/resume',{method:'POST'});await wait(50);assert.equal(calls,0);assert.equal(gate.status().active,0);socket.destroy();
+ }finally{await gate.close();await new Promise(r=>upstream.close(r));}
+});
+test('upstream im lặng quá timeout: trả 502 và active về 0',async()=>{
+ const upstream=http.createServer(()=>{});await new Promise(r=>upstream.listen(0,'127.0.0.1',r));
+ const {gate,base}=await gateFor(upstream,{upstreamIdleTimeoutMs:100});
+ try{
+  const r=await fetch(base+'/hang');assert.equal(r.status,502);await r.text();
+  assert.ok(await until(()=>gate.status().active===0));
+ }finally{upstream.closeAllConnections?.();await gate.close();await new Promise(r=>upstream.close(r));}
 });
 test('canary gọi đúng chat, ảnh thường và ảnh dạng tool theo từng host; một ảnh lỗi là fail',async()=>{
  const {liveCanary}=await import('../live-canary.mjs');const {referencePng}=await import('../fixtures.mjs');const original=globalThis.fetch;
