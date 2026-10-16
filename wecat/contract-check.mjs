@@ -2,7 +2,12 @@ import assert from 'node:assert/strict';
 import codex from '../open-sse/handlers/imageProviders/codex.js';
 import { CODEX_CLI_VERSION } from '../open-sse/config/appConstants.js';
 import { getModelsByProviderId } from '../open-sse/config/providerModels.js';
-const models=['gpt-5.6-luna-image','gpt-5.6-sol-image','gpt-5.6-terra-image','gpt-5.5-image'];
+// Model ảnh WeCat chọn trực tiếp: phải còn trong catalog.
+const models=['gpt-5.6-luna-image','gpt-5.6-sol-image','gpt-5.6-terra-image'];
+// Upstream đã gỡ khỏi catalog nhưng client cũ có thể còn gửi: request phải vẫn đi tiếp.
+const legacyPassthrough=['gpt-5.5-image'];
+// Model ảnh dạng tool: model điều phối do upstream chọn, phải là LLM còn trong catalog.
+const toolModels=['gpt-image-2','gpt-image-2.5-sunburst'];
 const refs=['data:image/png;base64,c291cmNl','data:image/png;base64,cmVmMQ==','data:image/png;base64,cmVmMg=='];
 const originalFetch=globalThis.fetch;
 globalThis.fetch=async()=>{throw Error('Contract test không được gọi mạng')};
@@ -10,13 +15,19 @@ let passed=0;
 try {
   const version=CODEX_CLI_VERSION.split('.').map(Number);assert.ok(version[0]>0||version[1]>=155,'Codex client version thấp hơn baseline đã chạy production');
   const catalog=getModelsByProviderId('codex');
-  for(const model of models){
-    assert.ok(catalog.some(x=>x.id===model&&x.kind==='image'), 'Model image bị mất: '+model);
+  for(const model of models)assert.ok(catalog.some(x=>x.id===model&&x.kind==='image'), 'Model image bị mất: '+model);
+  for(const model of [...models,...legacyPassthrough,...toolModels]){
+    const tool=toolModels.includes(model);
     for(const inputs of [[],[refs[0]],refs]){
       const body={prompt:'offline contract',size:'1024x1024',quality:'high',output_format:'png',image_detail:'high'};
       if(inputs.length===1)body.image=inputs[0];else if(inputs.length)body.images=inputs;
       const result=codex.buildBody(model,body);
-      assert.equal(result.model,model.replace(/-image$/,''));
+      if(tool){
+        assert.equal(result.tools[0].model,model,'Tool model bị đổi: '+model);
+        assert.ok(catalog.some(x=>x.id===result.model&&!x.kind),'Model điều phối không có trong catalog: '+result.model);
+      }else{
+        assert.equal(result.model,model.replace(/-image$/,''));
+      }
       assert.deepEqual(result.input[0].content.filter(x=>x.type==='input_image').map(x=>x.image_url),inputs);
       assert.ok(result.input[0].content.filter(x=>x.type==='input_image').every(x=>x.detail==='high'));
       assert.equal(result.tools[0].size,body.size);assert.equal(result.tools[0].quality,body.quality);assert.equal(result.tools[0].output_format,'png');passed++;

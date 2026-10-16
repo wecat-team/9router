@@ -2,7 +2,7 @@
   "schema": 1,
   "upstream": "https://github.com/decolua/9router.git",
   "upstreamRef": "master",
-  "acceptedUpstreamCommit": "ce4460ef79382bfddb4aa5fc0ff9f3cb0d5f95a8",
+  "acceptedUpstreamCommit": "87a74e1bda3677193c6f71a7e2100c90311f0689",
   "nodeImage": "node:22-alpine@sha256:0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18c0e2bc2e402",
   "criticalSuites": [
     "unit/codex-image-models.test.js",
@@ -14,8 +14,8 @@
     "unit/db-sqlite-vs-lowdb.test.js",
     "unit/openai-responses-completed-usage.test.js"
   ],
-  "upstreamVersion": "0.5.99",
-  "packageManifestSha256": "f242593dcf503bb19b1c63ebdab6d2892c8c6f37f98113e77972e720dd003d45",
+  "upstreamVersion": "0.5.104",
+  "packageManifestSha256": "eee409b146c9b7077559c3d6a37ff43856594ba76c1a50fbc4e5e42949b60993",
   "testManifestSha256": "320deca1e8563b1f70a33bca22530c549069174c8b8f6c8cb08fcf5c0f9e3f9f",
   "toolManifestSha256": "fe04f102fe0c946686e0f717866fc9e15cc73cc2217416c7ccef3fd3f97d85d1"
 }
