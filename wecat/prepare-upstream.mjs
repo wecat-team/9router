@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import { run } from './release.mjs';
 import {
   upstreamState, formatReport, readValidation, writeValidation, updatedValidation,
-  manifestHashes, regenerateLock,
+  manifestHashes, regenerateLock, isAncestor, treeDrift, applyUpstreamDiff,
 } from './upstream.mjs';
 
 const args = process.argv.slice(2);
@@ -24,12 +24,36 @@ if (state.upToDate) {
 
 const branch = `wecat/upstream-${state.toVersion}-${state.toCommit.slice(0, 12)}`;
 run('git', ['switch', '-c', branch, 'origin/master']);
-try {
-  run('git', ['merge', '--no-ff', '--no-commit', state.toCommit]);
-} catch {
-  const conflicts = run('git', ['diff', '--name-only', '--diff-filter=U']);
-  console.error(`Merge có conflict trên ${branch}; giữ nguyên để review, không tự reset:\n${conflicts}`);
-  console.error(formatReport(state));
+// PR nâng upstream được squash merge nên master có thể không chứa commit upstream đã chấp nhận.
+// Khi đó merge-base cũ sinh conflict giả; áp diff from..to thay cho merge.
+const mode = isAncestor(state.fromCommit, 'HEAD') ? 'merge' : 'diff';
+if (mode === 'diff') {
+  const driftBefore = treeDrift(state.fromCommit);
+  if (driftBefore.length) {
+    console.error(`master khác upstream đã chấp nhận ở file không thuộc fork; xử lý trước khi nâng:\n${driftBefore.join('\n')}`);
+    process.exit(1);
+  }
+  const conflicts = applyUpstreamDiff(state.fromCommit, state.toCommit);
+  if (conflicts.length) {
+    console.error(`Áp diff upstream có conflict trên ${branch} (chỉ file fork sửa mới có thể conflict); giữ nguyên để review:\n${conflicts.join('\n')}`);
+    console.error(formatReport({ ...state, mode }));
+    process.exit(1);
+  }
+} else {
+  try {
+    run('git', ['merge', '--no-ff', '--no-commit', state.toCommit]);
+  } catch {
+    const conflicts = run('git', ['diff', '--name-only', '--diff-filter=U']);
+    console.error(`Merge có conflict trên ${branch}; giữ nguyên để review, không tự reset:\n${conflicts}`);
+    console.error(formatReport({ ...state, mode }));
+    process.exit(1);
+  }
+}
+// Ngoài wecat/, .github/ và file fork sở hữu, cây phải giống hệt upstream đích. Bắt cả trường hợp
+// auto-merge trộn sai mà không báo conflict (providers-baseline.json ở đợt 0.5.104).
+const drift = treeDrift(state.toCommit);
+if (drift.length) {
+  console.error(`Cây candidate khác upstream ${state.toVersion} ở file không thuộc fork; không commit:\n${drift.join('\n')}`);
   process.exit(1);
 }
 
@@ -47,7 +71,7 @@ if (manifests.tests !== before.testManifestSha256) {
 }
 writeValidation(updatedValidation(before, { commit: state.toCommit, version: state.toVersion, manifests }));
 
-const report = formatReport({ ...state, locksRegenerated });
+const report = formatReport({ ...state, locksRegenerated, mode });
 fs.mkdirSync('wecat/.reports', { recursive: true });
 const reportFile = `wecat/.reports/upstream-${state.toVersion}.md`;
 fs.writeFileSync(reportFile, report);

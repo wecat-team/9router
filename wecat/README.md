@@ -47,16 +47,16 @@ node wecat/prepare-upstream.mjs --pr      # mặc định lấy tag upstream m�
 3. Cập nhật commit, version và hash manifest trong `wecat/validation.json`.
 4. Commit kèm báo cáo, push và mở PR với mục **Cần review**: patch IP, SQLite, dependency, Dockerfile, đường sinh ảnh, token refresh, workflow.
 
-**PR nâng upstream được squash merge** (bảo vệ `master` bắt lịch sử tuyến tính), nên `master` không chứa commit upstream làm tổ tiên. Merge-base khi nâng lần sau vẫn là bản cuối từng merge thật (`v0.5.95`), vì vậy `prepare-upstream` sẽ gặp conflict ở các file upstream đã sửa lại sau đó. Lần 0.5.104 có 19 file. Cách xử lý lặp lại được:
+**PR nâng upstream được squash merge** (bảo vệ `master` bắt lịch sử tuyến tính), nên `master` không chứa commit upstream làm tổ tiên. `prepare-upstream` xử lý tự động:
 
-1. Fork chỉ sở hữu `wecat/`, `.github/` và các file sau ngoài hai thư mục đó: `.dockerignore`, `.gitignore`, `AGENTS.md`, khối WeCat đầu `CLAUDE.md`, `tests/unit/codex-refresh-token.test.js` (cửa sổ refresh Codex 10 phút).
-2. Conflict ở file không thuộc danh sách trên thì lấy nguyên bản upstream: `git checkout --theirs -- <file>`. Conflict ở file thuộc fork thì sửa tay.
-3. Bước bắt buộc: `git diff --stat <upstream-commit> -- . ':!wecat' ':!.github'` chỉ được liệt kê các file của fork ở mục 1. Có file khác là auto-merge đã trộn sai: lấy lại bản upstream của file đó (`git checkout <upstream-commit> -- <file>`).
-4. Chạy tiếp phần còn lại của script bằng tay: tạo lại lock nếu manifest đổi, cập nhật `wecat/validation.json`, ghi báo cáo. Ghi số conflict và cách xử lý vào PR.
+1. Nếu `acceptedUpstreamCommit` trong `validation.json` là tổ tiên của `master`, script dùng `git merge` như bình thường.
+2. Nếu không, script **áp diff** `acceptedUpstreamCommit..đích` bằng `git apply --3way --index` (một commit thường, không phải merge). Merge theo merge-base cũ sẽ sinh conflict giả: lần 0.5.104 có 19 file. Áp diff thì chỉ file fork thật sự sửa mới có thể conflict. Dựng lại lần 0.5.99 → 0.5.104 bằng cách này: 0 conflict. Báo cáo ghi rõ chế độ áp diff.
+3. Trước khi áp diff, `master` phải giống upstream đã chấp nhận ở mọi file không thuộc fork; nếu khác, script dừng và liệt kê.
+4. Ở cả hai chế độ, cây candidate phải giống hệt upstream đích ở mọi file không thuộc fork. Nếu có file lệch (ví dụ auto-merge trộn sai mà không báo conflict, như `providers-baseline.json` lần 0.5.104), script dừng và không commit.
 
-Nếu đổi danh sách file của fork ở mục 1, cập nhật đoạn này trong cùng PR.
+File fork sở hữu khai báo một chỗ ở `FORK_DIRS`/`FORK_OWNED_FILES` trong `wecat/upstream.mjs`: `wecat/`, `.github/`, `.dockerignore`, `.gitignore`, `AGENTS.md`, `CLAUDE.md` (khối WeCat), `tests/unit/codex-refresh-token.test.js` (cửa sổ refresh Codex 10 phút). Sửa file upstream nào khác thì thêm vào danh sách trong cùng PR và ghi lý do. Khi upstream đã nhận thay đổi đó, gỡ file khỏi danh sách. Kiểm tay: `git diff --stat <upstream-commit> -- . ':!wecat' ':!.github'`.
 
-Nếu merge có conflict, script dừng và giữ nguyên trạng thái để xử lý tay. Script không bao giờ push `master` hay deploy. Thêm `--no-commit` để review trước khi commit, hoặc bỏ `--pr` để chỉ commit local. Nếu có mục `dockerfile`, chép thay đổi cần thiết của `Dockerfile` upstream sang `wecat/Dockerfile`. Báo cáo cũng được lưu ở `wecat/.reports/upstream-<version>.md`.
+Nếu merge hoặc áp diff có conflict, script dừng và giữ nguyên trạng thái để xử lý tay. Script không bao giờ push `master` hay deploy. Thêm `--no-commit` để review trước khi commit, hoặc bỏ `--pr` để chỉ commit local. Nếu có mục `dockerfile`, chép thay đổi cần thiết của `Dockerfile` upstream sang `wecat/Dockerfile`. Báo cáo cũng được lưu ở `wecat/.reports/upstream-<version>.md`.
 
 Không có job theo dõi tự động: thỉnh thoảng chạy `node wecat/upstream-status.mjs` (chỉ đọc). Workflow *WeCat upstream watch* vẫn còn file nhưng đã tắt. Sau khi merge, cập nhật [STATUS](STATUS.md).
 
