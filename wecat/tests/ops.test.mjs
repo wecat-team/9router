@@ -71,6 +71,17 @@ test('canary thật phải có chấp thuận rõ và không nhận URL chứa c
  await assert.rejects(liveCanary({baseUrl:'http://example.invalid/v1',apiKey:'test',allowLive:true}),/HTTPS/);
  await assert.rejects(liveCanary({baseUrl:'https://user:pass@example.invalid/v1',apiKey:'test',allowLive:true}),/credential/);
 });
+test('canary gọi đúng chat, ảnh thường và ảnh dạng tool theo từng host; một ảnh lỗi là fail',async()=>{
+ const {liveCanary}=await import('../live-canary.mjs');const {referencePng}=await import('../fixtures.mjs');const original=globalThis.fetch;
+ const run=async(target,failModel)=>{const models=[];globalThis.fetch=async(url,init)=>{const body=JSON.parse(init.body);models.push(body.model);
+  if(url.endsWith('/chat/completions'))return new Response('WECAT_CANARY_OK');
+  if(body.model===failModel)return new Response('lỗi',{status:502});
+  assert.deepEqual(body.images.length,2);return new Response(referencePng(),{headers:{'content-type':'image/png'}});};
+  try{return {result:await liveCanary({baseUrl:'http://127.0.0.1:1/v1',apiKey:'test',allowLive:true,target}),models};}finally{globalThis.fetch=original;}};
+ const primary=await run('primary');assert.deepEqual(primary.models.sort(),['cx/gpt-5.6-luna-image','cx/gpt-5.6-terra','cx/gpt-image-2']);assert.equal(primary.result.realProviderCalls,3);
+ const secondary=await run('secondary');assert.ok(secondary.models.includes('cx/gpt-image-2.5-sunburst'));
+ await assert.rejects(run('primary','cx/gpt-image-2'),/502/);
+});
 test('request bị hủy khi đang xếp hàng không gọi upstream sau resume',async()=>{
  let calls=0;const upstream=http.createServer((req,res)=>{calls++;res.end('ok')});await new Promise(r=>upstream.listen(0,'127.0.0.1',r));
  const gate=createRouterGate({target:`http://127.0.0.1:${upstream.address().port}`,publicHost:'127.0.0.1',publicPort:0,adminPort:0,logger:{info(){}}});

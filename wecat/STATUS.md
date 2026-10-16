@@ -1,13 +1,19 @@
 # Tình trạng 9Router WeCat
 
-Cập nhật: **2026-10-12**. Đây là nơi duy nhất ghi "đang ở đâu". Cập nhật file này trong cùng PR khi nâng upstream, và sau mỗi lần rollout production. Chỉ dùng tên vai trò primary/secondary; hostname, IP và credential không vào repo.
+Cập nhật: **2026-10-16**. Đây là nơi duy nhất ghi "đang ở đâu". Cập nhật file này trong cùng PR khi nâng upstream, và sau mỗi lần rollout production. Chỉ dùng tên vai trò primary/secondary; hostname, IP và credential không vào repo.
 
 ## Upstream
 
 - Nguồn: [`decolua/9router`](https://github.com/decolua/9router), phát hành bằng tag `vX.Y.Z` trên `master`.
-- Bản trước: **0.5.95**, commit `a99cf57239ff778b61e434c2786009d5ed1c412c`; giữ làm image rollback trên cả hai host.
-- Đã đồng bộ **0.5.99** từ `upstream/master`, ghim full SHA `ce4460ef79382bfddb4aa5fc0ff9f3cb0d5f95a8` trong [`validation.json`](validation.json). So với bản trước: 29 commit, 163 file thay đổi. Cả primary và secondary đã qua canary thật.
-- Kiểm ngày 2026-10-10: candidate được chuẩn bị bằng `prepare-upstream.mjs master --no-commit`, rồi chốt commit và PR sau review. Gate phát hành phải chạy trên checkout sạch và receipt phải đúng commit/image, không dùng receipt diagnostic của lượt review.
+- Bản đang chạy production: **0.5.99**, commit `ce4460ef79382bfddb4aa5fc0ff9f3cb0d5f95a8` (fork `1bb26a28`); giữ làm image rollback khi nâng 0.5.104.
+- Candidate **0.5.104** (tag `v0.5.104`, full SHA `87a74e1bda3677193c6f71a7e2100c90311f0689`, ghim trong [`validation.json`](validation.json)). So với 0.5.99: 38 commit, 140 file; không có migration SQLite, dependency không đổi (lock chỉ đổi version). Chưa rollout.
+- PR #10 squash merge nên `master` không chứa tổ tiên upstream; `prepare-upstream` gặp 19 conflict (merge-base v0.5.95). Fork không sửa file nào trong số đó nên lấy nguyên bản upstream. PR nâng upstream sau nên giữ merge commit để tránh lặp lại.
+
+### Nâng 0.5.104
+
+- Upstream gỡ `gpt-5.5`, `gpt-5.5-review`, `gpt-5.5-image`, `gpt-5.3-image` khỏi catalog Codex. Request tới các model này vẫn được chuyển lên upstream (đã test offline), chỉ mất khỏi `/v1/models`/dashboard; upstream coi `gpt-5.5` là model đã ngừng. app.wecat.vn đã chuyển cấu hình sang model 5.6 trước đợt nâng; contract giữ kiểm tra passthrough cho `gpt-5.5-image`.
+- Ảnh dạng tool (`gpt-image-*`) đổi model điều phối `gpt-5.5` → `gpt-5.6-sol`. Contract kiểm tool model giữ nguyên và model điều phối còn trong catalog; canary thật chạy thêm `gpt-image-2` (primary) hoặc `gpt-image-2.5-sunburst` (secondary), song song với ảnh luna để không kéo dài thời gian giữ gate. Canary dùng 3 lượt gọi thật.
+- `/v1/models` liệt kê thêm provider miễn phí không cần auth (opencode, …); khả năng gọi đã có từ 0.5.99. ACL theo key vẫn không bật.
 
 ## Fork
 
