@@ -1,0 +1,83 @@
+{
+  "schema": 1,
+  "version": "0.5.104",
+  "upstreamCommit": "87a74e1bda3677193c6f71a7e2100c90311f0689",
+  "forkCommit": "fd6da50fd74028c28cb8da62099cd5e3d6e5ba47",
+  "date": "2026-10-16",
+  "status": "partial-rollout-primary-pending",
+  "pullRequest": "https://github.com/wecat-team/9router/pull/12",
+  "validation": {
+    "pullRequestCheck": "WeCat release gate passed on 858d7e9b",
+    "operatorReceipt": "passed",
+    "criticalTests": 97,
+    "contractChecks": 20,
+    "containerSmoke": "passed",
+    "offlineRealProviderCalls": 0
+  },
+  "image": {
+    "name": "wecat-9router:0.5.104-fd6da50fd740",
+    "id": "sha256:96247a24ebe5f7d25dbbe328c0b96f2ab6ebb214d070ae481c83c748cabf48cc",
+    "platform": "linux/amd64",
+    "builtBy": "operator-local-gate",
+    "delivery": "docker save | ssh docker load",
+    "verifiedOnBothHosts": true
+  },
+  "targets": {
+    "primary": {
+      "status": "rolled-back-tcp-memory-exhaustion",
+      "runningVersion": "0.5.99",
+      "attempt": {
+        "date": "2026-10-16",
+        "shadowAuthAndPreservation": "passed",
+        "holdSeconds": 180,
+        "canary": {
+          "status": "passed",
+          "checkedAt": "2026-10-16T03:30:55.993Z",
+          "chat": { "http": 200, "elapsedMs": 2140 },
+          "imageWithTwoReferences": { "model": "gpt-5.6-luna-image", "http": 200, "elapsedMs": 57234 },
+          "toolImageWithTwoReferences": { "model": "gpt-image-2", "http": 200, "elapsedMs": 22976 },
+          "realProviderCalls": 3
+        },
+        "monitor": "failed-after-30-seconds",
+        "cause": "Kernel TCP out of memory khi gate thả 74–146 request tồn cùng lúc; ETIMEDOUT tới Codex, khóa toàn bộ tài khoản theo model. 0.5.99 gặp cùng lỗi sau rollback, không phải regression của phiên bản.",
+        "rollback": "tự động về 0.5.99; auth đạt; gate tạm gỡ thủ công khi chỉ còn 42 request đã mất client",
+        "clientImpactWindowUtc": "03:27–03:37"
+      },
+      "requiredNextStep": "Rollout lại ngoài giờ cao điểm; cân nhắc thả hàng đợi dần trong gate tạm."
+    },
+    "secondary": {
+      "status": "production-verified",
+      "runningVersion": "0.5.104",
+      "rolloutDate": "2026-10-16",
+      "shadowAuthAndPreservation": "passed",
+      "apiKeyCount": { "before": 1, "after": 1 },
+      "providerConnectionCount": { "before": 6, "after": 6 },
+      "keysPreserved": true,
+      "configPreserved": true,
+      "sqliteIntegrity": "ok",
+      "monitorSeconds": 180,
+      "restartCount": 0,
+      "gate": { "protocol": "hold-if-idle", "healthy": true, "held": false, "queued": 0 },
+      "shadowRemoved": true,
+      "newKeyAclEnabled": false,
+      "publicChecks": { "login": 200, "modelsWithoutKey": 401 },
+      "canary": {
+        "status": "passed",
+        "checkedAt": "2026-10-16T04:42:38.658Z",
+        "chat": { "http": 200, "elapsedMs": 1928 },
+        "imageWithTwoReferences": { "model": "gpt-5.6-luna-image", "http": 200, "elapsedMs": 29478 },
+        "toolImageWithTwoReferences": { "model": "gpt-image-2.5-sunburst", "http": 200, "elapsedMs": 35355 },
+        "realProviderCalls": 3
+      }
+    }
+  },
+  "rollback": {
+    "image": "wecat-9router:0.5.99-1bb26a28395b",
+    "imageId": "sha256:2e3a8604500a30770968743f9ec481a777b38ab494777cecbda2419f2ead1b47",
+    "oldImageRetainedOnBothHosts": true,
+    "sqliteBackupApiIntegrityVerified": true,
+    "schemaChanged": false,
+    "primaryImageRollbackPerformed": true,
+    "databaseSnapshotRestored": false
+  }
+}

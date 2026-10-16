@@ -6,7 +6,7 @@ Cập nhật: **2026-10-16**. Đây là nơi duy nhất ghi "đang ở đâu". C
 
 - Nguồn: [`decolua/9router`](https://github.com/decolua/9router), phát hành bằng tag `vX.Y.Z` trên `master`.
 - Bản đang chạy production: **0.5.99**, commit `ce4460ef79382bfddb4aa5fc0ff9f3cb0d5f95a8` (fork `1bb26a28`); giữ làm image rollback khi nâng 0.5.104.
-- Candidate **0.5.104** (tag `v0.5.104`, full SHA `87a74e1bda3677193c6f71a7e2100c90311f0689`, ghim trong [`validation.json`](validation.json)). So với 0.5.99: 38 commit, 140 file; không có migration SQLite, dependency không đổi (lock chỉ đổi version). Chưa rollout.
+- Candidate **0.5.104** (tag `v0.5.104`, full SHA `87a74e1bda3677193c6f71a7e2100c90311f0689`, ghim trong [`validation.json`](validation.json)). So với 0.5.99: 38 commit, 140 file; không có migration SQLite, dependency không đổi (lock chỉ đổi version). Secondary đã chạy; primary chờ rollout lại (W-017).
 - PR #10 squash merge nên `master` không chứa tổ tiên upstream; `prepare-upstream` gặp 19 conflict (merge-base v0.5.95). Fork không sửa file nào trong số đó nên lấy nguyên bản upstream. PR nâng upstream sau nên giữ merge commit để tránh lặp lại.
 
 ### Nâng 0.5.104
@@ -33,14 +33,14 @@ Cập nhật: **2026-10-16**. Đây là nơi duy nhất ghi "đang ở đâu". C
 
 ## Production
 
-Image 0.5.99 do gate operator build (amd64): `wecat-9router:0.5.99-1bb26a28395b`, ID `sha256:2e3a8604500a30770968743f9ec481a777b38ab494777cecbda2419f2ead1b47`. Đã nạp sang cả hai host qua SSH và so ID với receipt; cả hai host đã được chấp nhận chạy image này. Không deploy qua registry/GitHub Actions.
+Image 0.5.104 do gate operator build (amd64) trên `fd6da50f`: `wecat-9router:0.5.104-fd6da50fd740`, ID `sha256:96247a24ebe5f7d25dbbe328c0b96f2ab6ebb214d070ae481c83c748cabf48cc`. Đã nạp sang cả hai host qua SSH và so ID với receipt. Image 0.5.99 (`wecat-9router:0.5.99-1bb26a28395b`) giữ làm rollback trên cả hai host.
 
-| Vai trò | Phiên bản đang chạy | Kết quả 10–12/10/2026 | Dữ liệu/cấu hình | Rollback giữ trên host |
+| Vai trò | Phiên bản đang chạy | Kết quả 16/10/2026 | Dữ liệu/cấu hình | Rollback giữ trên host |
 |---|---|---|---|---|
-| primary | 0.5.99 | shadow đạt; chat 200 (~3 s), PNG hai reference 200 (~89 s, 984057 byte); monitor 180 s đạt, RestartCount=0; proxy tạm drain rồi dọn; kiểm lại HTTPS auth/phiên bản ngày 11/10 đạt | API key 3→3, provider 6→6; fingerprint settings/proxy/key giữ nguyên, SQLite ok | image 0.5.95 + compose/env cũ + SQLite backup API đã kiểm integrity + full volume khi writer dừng |
-| secondary | 0.5.99 (12/10) | 11/10: canary không đạt, tự rollback 0.5.95 (OAuth Codex refresh-invalid/401, W-016). 12/10 sau đăng nhập lại: đối chứng 0.5.95 chat 200; shadow đạt; gate `hold-if-idle`; chat 200 (~3.7 s, một tài khoản 429 rồi fallback), PNG hai reference 200 (~97 s, 158644 byte); monitor 180 s đạt, RestartCount=0; gate held=false, queued=0; HTTPS login 200, `/v1/models` không key 401; traffic ảnh thật sau rollout thành công | API key 1→1, provider 6→6; settings/proxy/key giữ nguyên, SQLite ok; ACL mới vẫn không bật | image 0.5.95 + env cũ + SQLite backup API + full volume khi writer dừng, ngoài cây deploy ứng dụng |
+| primary | 0.5.99 (rollback) | shadow đạt; canary 0.5.104 đạt (chat 200, luna-image 200, `gpt-image-2` 200). Monitor fail sau 30 s: kernel TCP OOM khi thả hàng đợi giờ cao điểm (W-017); tự rollback 0.5.99, 0.5.99 gặp cùng lỗi rồi hồi sau khoảng 1 phút. Chờ rollout lại ngoài giờ cao điểm | key/provider/cấu hình giữ nguyên, SQLite ok | image 0.5.99 + compose cũ + SQLite backup API + full volume khi writer dừng |
+| secondary | 0.5.104 | shadow đạt; gate `hold-if-idle`; chat 200 (~1.9 s), luna-image 200 (~29 s), `gpt-image-2.5-sunburst` 200 (~35 s); monitor 180 s đạt, RestartCount=0; gate held=false, queued=0; HTTPS login 200, `/v1/models` không key 401 | API key 1→1, provider 6→6; settings/proxy/key giữ nguyên, SQLite ok; ACL mới vẫn không bật | image 0.5.99 + env cũ + SQLite backup API + full volume khi writer dừng, ngoài cây deploy ứng dụng |
 
-Ledger hiện tại: [`releases/0.5.99-1bb26a28.json`](releases/0.5.99-1bb26a28.json) (cả hai production đã nâng và kiểm chứng). Lịch sử: [`releases/0.5.95-556b4a96.json`](releases/0.5.95-556b4a96.json), [`releases/0.5.95.json`](releases/0.5.95.json).
+Ledger hiện tại: [`releases/0.5.104-fd6da50f.json`](releases/0.5.104-fd6da50f.json) (**partial rollout**, primary chờ). Lịch sử: [`releases/0.5.99-1bb26a28.json`](releases/0.5.99-1bb26a28.json), [`releases/0.5.95-556b4a96.json`](releases/0.5.95-556b4a96.json), [`releases/0.5.95.json`](releases/0.5.95.json).
 
 Lưu ý vận hành:
 
@@ -51,6 +51,7 @@ Lưu ý vận hành:
 ## Còn mở
 
 1. **`docker-compose.yml` của upstream trỏ `decolua/9router:latest`.** Không dùng file này cho production WeCat. Giữ nguyên vì là file upstream.
+2. **Primary chưa lên 0.5.104 (W-017).** Rollout lúc ít traffic. Gate tạm của script primary thả cả hàng đợi một lúc và không trừ request đã mất client; nên sửa trước đợt sau.
 
 ## Lịch sử
 
@@ -65,3 +66,4 @@ Lưu ý vận hành:
 | 2026-10-10 | Nâng upstream 0.5.99 ([PR #10](https://github.com/wecat-team/9router/pull/10)); Actions validation được operator cho phép, bật lại check bắt buộc. primary → 0.5.99 (`wecat-9router:0.5.99-1bb26a28395b`), canary/monitor đạt |
 | 2026-10-11 | secondary: canary 0.5.99 không đạt, tự rollback về 0.5.95 (W-015, W-016). Chặn bởi OAuth Codex refresh-invalid/401; chờ operator đăng nhập lại |
 | 2026-10-12 | secondary: operator đăng nhập lại sáu OAuth Codex; rollout 0.5.99 đạt canary/monitor. Cả hai production chạy 0.5.99 |
+| 2026-10-16 | Nâng upstream 0.5.104 ([PR #12](https://github.com/wecat-team/9router/pull/12)). secondary → 0.5.104 đạt. primary: canary đạt nhưng monitor fail do TCP OOM của host khi thả hàng đợi giờ cao điểm (W-017), rollback 0.5.99 |
