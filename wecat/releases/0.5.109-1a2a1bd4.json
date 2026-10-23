@@ -1,0 +1,93 @@
+{
+  "schema": 1,
+  "version": "0.5.109",
+  "upstreamCommit": "f39d8f07481ae8518e93175f0ecaaafa61573c6c",
+  "forkCommit": "1a2a1bd4d1e70cc841afdf427ea1285ea02d608e",
+  "date": "2026-10-23",
+  "status": "secondary-verified-primary-pending",
+  "pullRequest": "TBD",
+  "validation": {
+    "operatorReceipt": "passed",
+    "criticalTests": 89,
+    "contractChecks": 20,
+    "containerSmoke": "passed",
+    "offlineRealProviderCalls": 0,
+    "note": "Gate lần 1 fail ở critical vì marker conflict còn sót trong tests/unit/codex-refresh-token.test.js (fork đã sửa test này trước, upstream nay cũng đổi sang 10 phút); lấy bản upstream, amend commit, gate lần 2 đạt. Không dùng GitHub Actions."
+  },
+  "image": {
+    "name": "wecat-9router:0.5.109-1a2a1bd4d1e7",
+    "id": "sha256:ba68406deac484b45b12605d9cb781ef225ae9d4438fb45c25f758f3da81d3bc",
+    "platform": "linux/amd64",
+    "nodeImage": "node:22.23.4-alpine@sha256:fe4f6d74e20370acb04ad889077d14d0f64a9c8ea6a42bc60cddf1e844699914",
+    "builtBy": "operator-local-gate",
+    "delivery": "docker save | ssh docker load",
+    "verifiedOnBothHosts": true
+  },
+  "targets": {
+    "secondary": {
+      "status": "production-verified",
+      "runningVersion": "0.5.109",
+      "rolloutDate": "2026-10-23",
+      "rolloutTimeUtc": "15:10",
+      "shadowAuthAndPreservation": "passed",
+      "apiKeyCount": {
+        "before": 2,
+        "after": 2
+      },
+      "providerConnectionCount": {
+        "before": 6,
+        "after": 6
+      },
+      "keysPreserved": true,
+      "configPreserved": true,
+      "sqliteIntegrity": "ok",
+      "monitorSeconds": 180,
+      "restartCount": 0,
+      "gate": {
+        "protocol": "hold-if-idle",
+        "healthy": true,
+        "held": false,
+        "queued": 0
+      },
+      "shadowRemoved": true,
+      "newKeyAclEnabled": false,
+      "publicChecks": {
+        "login": 200,
+        "modelsWithoutKey": 401
+      },
+      "canary": {
+        "status": "passed",
+        "checkedAt": "2026-10-23T15:10:55.674Z",
+        "chat": {
+          "http": 200,
+          "elapsedMs": 1514
+        },
+        "imageWithTwoReferences": {
+          "model": "gpt-5.6-luna-image",
+          "http": 200,
+          "elapsedMs": 26532
+        },
+        "toolImageWithTwoReferences": {
+          "model": "gpt-image-2.5-sunburst",
+          "http": 200,
+          "elapsedMs": 29039
+        },
+        "realProviderCalls": 3
+      }
+    },
+    "primary": {
+      "status": "pending",
+      "runningVersion": "0.5.104",
+      "note": "Watcher trên host chạy rollout khi 30 phút trước <50 request (W-017); lúc 22:19 VN còn 669 request/30 phút."
+    }
+  },
+  "rollback": {
+    "image": "wecat-9router:0.5.104-fd6da50fd740",
+    "imageId": "sha256:96247a24ebe5f7d25dbbe328c0b96f2ab6ebb214d070ae481c83c748cabf48cc",
+    "oldImageRetainedOnBothHosts": true,
+    "sqliteBackupApiIntegrityVerified": true,
+    "schemaChanged": false,
+    "databaseSnapshotRestored": false,
+    "notes": "secondary: backup trong /root/wecat-rollout-0.5.109-20261024/operator-0.5.109-<stamp>, ngoài cây deploy ứng dụng."
+  }
+}
