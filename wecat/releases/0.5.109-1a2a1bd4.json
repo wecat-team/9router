@@ -4,15 +4,16 @@
   "upstreamCommit": "f39d8f07481ae8518e93175f0ecaaafa61573c6c",
   "forkCommit": "1a2a1bd4d1e70cc841afdf427ea1285ea02d608e",
   "date": "2026-10-23",
-  "status": "secondary-verified-primary-pending",
-  "pullRequest": "TBD",
+  "status": "production-verified",
+  "pullRequest": "https://github.com/wecat-team/9router/pull/16",
   "validation": {
     "operatorReceipt": "passed",
     "criticalTests": 89,
     "contractChecks": 20,
     "containerSmoke": "passed",
     "offlineRealProviderCalls": 0,
-    "note": "Gate lần 1 fail ở critical vì marker conflict còn sót trong tests/unit/codex-refresh-token.test.js (fork đã sửa test này trước, upstream nay cũng đổi sang 10 phút); lấy bản upstream, amend commit, gate lần 2 đạt. Không dùng GitHub Actions."
+    "note": "Gate lần 1 fail ở critical vì marker conflict còn sót trong tests/unit/codex-refresh-token.test.js (fork đã sửa test này trước, upstream nay cũng đổi sang 10 phút); lấy bản upstream, amend commit, gate lần 2 đạt. Không dùng GitHub Actions.",
+    "pullRequestCheck": "WeCat validation (Actions) trên PR #16"
   },
   "image": {
     "name": "wecat-9router:0.5.109-1a2a1bd4d1e7",
@@ -76,9 +77,55 @@
       }
     },
     "primary": {
-      "status": "pending",
-      "runningVersion": "0.5.104",
-      "note": "Watcher trên host chạy rollout khi 30 phút trước <50 request (W-017); lúc 22:19 VN còn 669 request/30 phút."
+      "status": "production-verified",
+      "runningVersion": "0.5.109",
+      "rolloutDate": "2026-10-23",
+      "rolloutTimeUtc": "16:04",
+      "trafficBeforeRollout": {
+        "windowMinutes": 30,
+        "requests": 31
+      },
+      "launchedBy": "watcher trên host (5 phút/lần, ngưỡng <50 request/30 phút, hạn 07:00 VN); rollout ngoài khung 00:00–07:00 theo chỉ đạo operator vì traffic đã dưới ngưỡng W-017",
+      "shadowAuthAndPreservation": "passed",
+      "apiKeyCount": {
+        "before": 3,
+        "after": 3
+      },
+      "providerConnectionCount": {
+        "before": 6,
+        "after": 6
+      },
+      "keysPreserved": true,
+      "configPreserved": true,
+      "sqliteIntegrity": "ok",
+      "monitorSeconds": 180,
+      "restartCount": 0,
+      "temporaryGateDrainedAndRemoved": true,
+      "nginxRestoredDirect": true,
+      "newTcpOomEvents": 0,
+      "publicChecks": {
+        "login": 200,
+        "modelsWithoutKey": 401
+      },
+      "canary": {
+        "status": "passed",
+        "checkedAt": "2026-10-23T16:08:47.793Z",
+        "chat": {
+          "http": 200,
+          "elapsedMs": 3558
+        },
+        "imageWithTwoReferences": {
+          "model": "gpt-5.6-luna-image",
+          "http": 200,
+          "elapsedMs": 74678
+        },
+        "toolImageWithTwoReferences": {
+          "model": "gpt-image-2",
+          "http": 200,
+          "elapsedMs": 19665
+        },
+        "realProviderCalls": 3
+      }
     }
   },
   "rollback": {
@@ -88,6 +135,7 @@
     "sqliteBackupApiIntegrityVerified": true,
     "schemaChanged": false,
     "databaseSnapshotRestored": false,
-    "notes": "secondary: backup trong /root/wecat-rollout-0.5.109-20261024/operator-0.5.109-<stamp>, ngoài cây deploy ứng dụng."
-  }
+    "notes": "Không rollback. primary: backup trong /opt/9router/operator-0.5.109-<stamp> (compose, nginx.conf, SQLite shadow/boundary, full volume). secondary: /root/wecat-rollout-0.5.109-20261024/operator-0.5.109-<stamp>. Image 0.5.104 giữ trên cả hai host."
+  },
+  "note": "Image được gate và build trên commit nhánh 1a2a1bd4 (receipt gắn commit này) trước khi merge; master sau squash merge có SHA khác nhưng cùng tree. Lần sau gate trên commit master như 0.5.99/0.5.104."
 }
