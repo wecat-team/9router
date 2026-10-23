@@ -107,3 +107,4 @@ debug.log
 
 !/wecat/package-lock.json
 /wecat/node_modules/
+.scratch/
