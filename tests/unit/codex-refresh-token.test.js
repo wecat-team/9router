@@ -148,7 +148,8 @@ describe("Codex Refresh Token", () => {
       const { getRefreshLeadMs } = await import("../../open-sse/services/tokenRefresh.js");
 
       // Synced with CLIProxyAPI refresh_registry
-      // Codex dùng cửa sổ 10 phút; 5 ngày gây refresh lặp và làm mất phiên OAuth.
+      // 10 minutes, not CLIProxyAPI's 5 days: OpenAI rotates the refresh token on every
+      // refresh and revokes the session on reuse, so a 5d lead logged accounts out (0bc7f86e).
       expect(getRefreshLeadMs("codex")).toBe(10 * 60 * 1000);
       expect(getRefreshLeadMs("claude")).toBe(4 * 60 * 60 * 1000);       // 4 hours
       expect(getRefreshLeadMs("iflow")).toBe(24 * 60 * 60 * 1000);       // 24 hours
