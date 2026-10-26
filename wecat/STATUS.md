@@ -1,6 +1,6 @@
 # Tình trạng 9Router WeCat
 
-Cập nhật: **2026-10-24** (00:10 giờ VN). Đây là nơi duy nhất ghi "đang ở đâu". Cập nhật file này trong cùng PR khi nâng upstream, và sau mỗi lần rollout production. Chỉ dùng tên vai trò primary/secondary; hostname, IP và credential không vào repo.
+Cập nhật: **2026-10-26** (candidate 0.5.111, production vẫn 0.5.109). Đây là nơi duy nhất ghi "đang ở đâu". Cập nhật file này trong cùng PR khi nâng upstream, và sau mỗi lần rollout production. Chỉ dùng tên vai trò primary/secondary; hostname, IP và credential không vào repo.
 
 ## Upstream
 
@@ -8,6 +8,13 @@ Cập nhật: **2026-10-24** (00:10 giờ VN). Đây là nơi duy nhất ghi "đ
 - Bản đang chạy production: **0.5.109**, commit `f39d8f07481ae8518e93175f0ecaaafa61573c6c` (fork `1a2a1bd4` trên nhánh, [PR #16](https://github.com/wecat-team/9router/pull/16)); 0.5.104 giữ làm image rollback.
 - Candidate trước: **0.5.104** (`87a74e1bda3677193c6f71a7e2100c90311f0689`, [PR #12](https://github.com/wecat-team/9router/pull/12)).
 - PR #10 squash merge nên `master` không chứa tổ tiên upstream; `prepare-upstream` gặp 19 conflict (merge-base v0.5.95). Fork không sửa file nào trong số đó nên lấy nguyên bản upstream. PR nâng upstream sau nên giữ merge commit để tránh lặp lại.
+
+### Nâng 0.5.111 (candidate)
+
+- Upstream 0.5.109 → 0.5.111 (`3a978a631ad65529c06e48ce495092d5bba29f46`): 17 commit, 56 file, áp diff (master mất tổ tiên upstream), 0 conflict, `treeDrift` sạch. Không đổi `custom-server.js`, auth, SQLite/migration, Dockerfile hay dependency (lockfile chỉ đổi version); DB tương thích rollback 0.5.109.
+- **Ảnh Codex (ảnh hưởng WeCat):** upstream gỡ `gpt-5.6-{luna,terra,sol}-image` khỏi catalog, thêm `gpt-6-sol-image`; model điều phối tool `gpt-image-*` đổi `gpt-5.6-terra` → `gpt-6-sol`. Request tới 3 model đã gỡ vẫn đi tiếp tới đúng model chính kèm đủ ảnh tham chiếu; contract đổi sang kiểm passthrough (23 check), mutation-check giữ nguyên. app.wecat.vn ghi cứng danh sách model, không đọc `/v1/models`, nên không cần đổi app trước khi nâng. Rủi ro còn lại: tài khoản không được dùng `gpt-6-sol` sẽ lỗi tool ảnh; canary `gpt-image-2` (primary) và `gpt-image-2.5-sunburst` (secondary) kiểm đúng chỗ này. Chi tiết: [MODELS](MODELS.md).
+- Phần còn lại không thuộc đường WeCat dùng: Ollama TTS/embedding, provider Runcrate, Kimi K3.1 Pro, OpenCode Free (TLS/fingerprint), DeepSeek, thinking Claude Haiku/GPT-5.6 qua OpenAI Compatible, Headroom, translator ảnh trong tool message, thẻ CLI Pi. `executors/base.js` chỉ thêm tham số tùy chọn cho OpenCode.
+- Kế hoạch rollout: secondary trước; primary 00:00 giờ VN 27/10 (W-017).
 
 ### Nâng 0.5.109
 

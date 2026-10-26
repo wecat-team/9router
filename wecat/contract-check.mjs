@@ -2,10 +2,11 @@ import assert from 'node:assert/strict';
 import codex from '../open-sse/handlers/imageProviders/codex.js';
 import { CODEX_CLI_VERSION } from '../open-sse/config/appConstants.js';
 import { getModelsByProviderId } from '../open-sse/config/providerModels.js';
-// Model ảnh WeCat chọn trực tiếp: phải còn trong catalog.
-const models=['gpt-5.6-luna-image','gpt-5.6-sol-image','gpt-5.6-terra-image'];
-// Upstream đã gỡ khỏi catalog nhưng client cũ có thể còn gửi: request phải vẫn đi tiếp.
-const legacyPassthrough=['gpt-5.5-image'];
+// Model ảnh có trong catalog upstream (0.5.111 thay nhóm gpt-5.6-*-image): phải còn trong catalog.
+const models=['gpt-6-sol-image'];
+// Upstream đã gỡ khỏi catalog nhưng app vẫn gửi (gpt-5.6-luna-image là mặc định của app.wecat.vn):
+// request phải vẫn đi tiếp tới đúng model chính kèm đủ ảnh tham chiếu.
+const legacyPassthrough=['gpt-5.6-luna-image','gpt-5.6-sol-image','gpt-5.6-terra-image','gpt-5.5-image'];
 // Model ảnh dạng tool: model điều phối do upstream chọn, phải là LLM còn trong catalog.
 const toolModels=['gpt-image-2','gpt-image-2.5-sunburst'];
 const refs=['data:image/png;base64,c291cmNl','data:image/png;base64,cmVmMQ==','data:image/png;base64,cmVmMg=='];
