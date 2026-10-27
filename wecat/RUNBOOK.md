@@ -88,6 +88,16 @@ Ba request: chat 32 tokens, rồi song song hai ảnh 1024 low, mỗi ảnh có 
 - Không rollback một service đã đạt chỉ vì dọn proxy tạm chậm. Giữ proxy passthrough tới khi request của nó drain; phân biệt lỗi cleanup với lỗi application.
 - Không chạy `docker system prune`, xóa volume hoặc reset repo chứa thay đổi không thuộc release này.
 
+## Sau rollout: đồng bộ app
+
+Khi **cả hai host** đã đạt, chạy bàn giao model cho app gọi gateway theo [APP-SYNC](APP-SYNC.md) trước khi đóng đợt nâng:
+
+```sh
+node wecat/app-handoff.mjs v<bản-production-cũ>   # offline: diff catalog/đường model Codex, sinh prompt cho agent repo app
+```
+
+Có thay đổi model thì thêm số liệu usage và thử thật (`--usage`, `--probe-live --allow-live`), rồi gửi `wecat/.reports/app-handoff-<version>.md` cho agent ở repo app. Ghi `appHandoff` vào ledger. Không có thay đổi thì ghi `not-needed`.
+
 ## Bằng chứng cần lưu
 
 Upstream SHA, fork SHA, dependency hashes, image digest, thời điểm/role, backup path riêng tư, key/provider preservation (boolean/count, không giá trị), canary result, health/RestartCount, gate resumed, rollback decision. Receipt local và canary prod phải được ghi thành hai loại bằng chứng riêng.

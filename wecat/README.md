@@ -58,7 +58,7 @@ File fork sở hữu khai báo một chỗ ở `FORK_DIRS`/`FORK_OWNED_FILES` tr
 
 Nếu merge hoặc áp diff có conflict, script dừng và giữ nguyên trạng thái để xử lý tay. Script không bao giờ push `master` hay deploy. Thêm `--no-commit` để review trước khi commit, hoặc bỏ `--pr` để chỉ commit local. Nếu có mục `dockerfile`, chép thay đổi cần thiết của `Dockerfile` upstream sang `wecat/Dockerfile`. Báo cáo cũng được lưu ở `wecat/.reports/upstream-<version>.md`.
 
-Không có job theo dõi tự động: thỉnh thoảng chạy `node wecat/upstream-status.mjs` (chỉ đọc). Workflow *WeCat upstream watch* vẫn còn file nhưng đã tắt. Sau khi merge, cập nhật [STATUS](STATUS.md).
+Không có job theo dõi tự động: thỉnh thoảng chạy `node wecat/upstream-status.mjs` (chỉ đọc). Workflow *WeCat upstream watch* vẫn còn file nhưng đã tắt. Sau khi merge, cập nhật [STATUS](STATUS.md). Sau khi rollout đạt cả hai production, chạy `node wecat/app-handoff.mjs v<bản-cũ>` để sinh prompt đồng bộ model cho repo app ([APP-SYNC](APP-SYNC.md)).
 
 Không tự đưa các lỗi test mới vào `known-fails`. Suite đầy đủ của upstream có lỗi đã biết và một số test mạng; Gate của fork chỉ dùng tập critical được liệt kê minh bạch. Lỗi critical là blocker. Thêm/bỏ suite cần PR giải thích vì sao và bằng chứng đối chứng.
 

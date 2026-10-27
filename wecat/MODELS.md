@@ -16,8 +16,8 @@ Tài liệu đối chiếu cho app gọi gateway (app.wecat.vn và các app khá
 | `gpt-5.6-sol` | 5 / 30 | có | primary ~10k | kiểm qua HTTPS 16/10: 200 |
 | `gpt-6-astra` | 10 / 50 | có | secondary 431 | đắt nhất |
 | `gpt-6.1-sol` | 2 / 10 | **chưa** | secondary 38 | `responsesLite`; preset mặc định của Codex CLI upstream |
-| `gpt-6-sol` | 2 / 10 | **chưa** | chưa có | `responsesLite`; từ 0.5.111 là model điều phối tool `gpt-image-*` (canary mỗi lượt rollout kiểm qua tool) |
-| `gpt-6-luna` | 0,1 / 0,5 | **chưa** | chưa có | `responsesLite`; chưa thử với tài khoản WeCat |
+| `gpt-6-sol` | 2 / 10 | **chưa** | chưa có | `responsesLite`; từ 0.5.111 là model điều phối tool `gpt-image-*` (canary mỗi lượt rollout kiểm qua tool); chat thử 27/10: 200 |
+| `gpt-6-luna` | 0,1 / 0,5 | **chưa** | chưa có | `responsesLite`; rẻ nhất catalog; chat thử 27/10: 200 (~3 s), câu mô tả sản phẩm dùng được |
 
 Biến thể không dùng cho app: hậu tố `[1m]` (context mở rộng, cùng model upstream), hậu tố `-review` (tính vào quota review), `gpt-daybreak-blue-latest`, `gpt-reserve`, `codex-auto-review`.
 
@@ -28,7 +28,7 @@ Biến thể không dùng cho app: hậu tố `[1m]` (context mở rộng, cùng
 | `gpt-5.6-luna-image` | model chính vẽ | có, **mặc định** | primary ~83k | **gỡ khỏi catalog từ 0.5.111**, request vẫn đi tiếp (contract); canary ảnh mỗi lượt rollout |
 | `gpt-5.6-terra-image` | model chính vẽ | có, mặc định Làm mới listing | primary ~12k | gỡ khỏi catalog từ 0.5.111, request vẫn đi tiếp (contract) |
 | `gpt-5.6-sol-image` | model chính vẽ | có | primary ~8k | gỡ khỏi catalog từ 0.5.111, request vẫn đi tiếp (contract); thay `gpt-5.5-image` |
-| `gpt-6-sol-image` | model chính vẽ | **chưa** | chưa có | có trong catalog từ 0.5.111, thay nhóm `gpt-5.6-*-image`; chưa thử với ảnh tham chiếu |
+| `gpt-6-sol-image` | model chính vẽ | **chưa** | chưa có | có trong catalog từ 0.5.111, thay nhóm `gpt-5.6-*-image`; thử 27/10 với 2 ảnh tham chiếu: 200, PNG 1254×1254, ~19–29 s. Ứng viên mặc định ảnh của app, chờ A/B ảnh thật |
 | `gpt-image-2.5` | tool | có | secondary 3 | |
 | `gpt-image-2.5-flare` | tool | có | chưa có | |
 | `gpt-image-2.5-sunburst` | tool | có | secondary 852 | canary secondary |
@@ -43,7 +43,7 @@ Biến thể không dùng cho app: hậu tố `[1m]` (context mở rộng, cùng
 
 - `gpt-5.5`, `gpt-5.5-review`, `gpt-5.5-image`, `gpt-5.3-image`: upstream gỡ từ 0.5.104 vì coi là model đã ngừng. Request vẫn được chuyển lên upstream, nhưng có thể trả 400 bất cứ lúc nào. app.wecat.vn đã thôi dùng (map sang `gpt-5.6-sol-image` / `gpt-5.6-terra`, migration 0080).
 - `gpt-5.6-luna-image`, `gpt-5.6-terra-image`, `gpt-5.6-sol-image`: upstream gỡ từ 0.5.111 vì coi `gpt-6-sol-image` thay thế. Request vẫn được chuyển lên upstream với model chính `gpt-5.6-*` kèm đủ ảnh tham chiếu (contract kiểm offline mỗi lần gate), chỉ mất khỏi `/v1/models`/dashboard. app.wecat.vn ghi cứng danh sách model nên không bị ảnh hưởng. Đổi mặc định sang `gpt-6-sol-image` là việc riêng của app, chỉ làm sau khi thử thật đạt.
-- Chỉ `gpt-6-sol-image` có trong catalog. Các `gpt-6-…-image` khác vẫn được chuyển thành model chính kèm tool sinh ảnh nhưng chưa được kiểm; app từng ghi nhận `gpt-6-astra-image` kèm ảnh tham chiếu trả 502 (19/09). Không bật model nào cho đến khi thử đạt với ảnh tham chiếu.
+- Chỉ `gpt-6-sol-image` có trong catalog. Các `gpt-6-…-image` khác vẫn được chuyển thành model chính kèm tool sinh ảnh. `gpt-6-luna-image` thử 27/10 với 2 ảnh tham chiếu: 200, ~20 s (rẻ nhất, nhưng không có trong catalog nên cùng rủi ro bị chặn như nhóm `gpt-5.6-*-image`). Model khác chưa được kiểm; app từng ghi nhận `gpt-6-astra-image` kèm ảnh tham chiếu trả 502 (19/09). Không bật model nào cho đến khi thử đạt với ảnh tham chiếu.
 
 ## Khi cập nhật danh sách model ở app
 
@@ -51,4 +51,4 @@ Biến thể không dùng cho app: hậu tố `[1m]` (context mở rộng, cùng
 2. Model mới: thử một lượt thật với đúng payload của app (vision, JSON có cấu trúc, ảnh tham chiếu) và ghi kết quả vào PR của app.
 3. Đổi model mặc định hoặc gỡ model: migration cấu hình đã lưu, có bảng backup để downgrade (tiền lệ migration 0080).
 4. Sau deploy app: kiểm usage gateway theo model; không còn request tới model đã gỡ.
-5. Khi nâng 9Router có đổi catalog: cập nhật file này trong cùng PR nâng upstream.
+5. Khi nâng 9Router có đổi catalog: cập nhật file này trong cùng PR nâng upstream, và sau rollout chạy bàn giao cho repo app theo [APP-SYNC](APP-SYNC.md) (`node wecat/app-handoff.mjs`).

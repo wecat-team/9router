@@ -88,5 +88,13 @@
     "Model ảnh đã gỡ khỏi catalog (gpt-5.6-luna-image, mặc định app) chạy thật qua passthrough trên cả hai host.",
     "Tool gpt-image-* chạy qua model điều phối gpt-6-sol trên tài khoản Pro, Team và Plus.",
     "Không dùng GitHub Actions cho build/deploy; Actions chỉ chạy WeCat validation trên PR."
-  ]
+  ],
+  "appHandoff": {
+    "status": "sent",
+    "date": "2026-10-27",
+    "removedModelsInUse": ["gpt-5.6-luna-image", "gpt-5.6-sol-image", "gpt-5.6-terra-image"],
+    "probe": "passed",
+    "appPullRequest": null,
+    "notes": "Prompt gửi cho agent repo app 27/10. Thử thật qua gateway: gpt-6-sol-image, gpt-5.6-{luna,sol,terra}-image, gpt-image-1.5 đều 200 với 2 ảnh tham chiếu. Đề xuất mặc định: ảnh gpt-6-sol-image (dự phòng gpt-5.6-luna-image), text nhẹ gpt-6-luna, text nặng gpt-6-sol."
+  }
 }
