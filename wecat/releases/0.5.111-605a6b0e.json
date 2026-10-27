@@ -1,0 +1,92 @@
+{
+  "schema": 1,
+  "version": "0.5.111",
+  "upstreamCommit": "3a978a631ad65529c06e48ce495092d5bba29f46",
+  "forkCommit": "605a6b0e232266a495dedd7fd5ecbfc3eae4a8b8",
+  "date": "2026-10-27",
+  "status": "production-verified",
+  "pullRequest": "https://github.com/wecat-team/9router/pull/17",
+  "validation": {
+    "operatorReceipt": "passed",
+    "criticalTests": 93,
+    "contractChecks": 23,
+    "mutation": "reference-image-mutation-caught",
+    "containerSmoke": "passed",
+    "offlineRealProviderCalls": 0,
+    "pullRequestCheck": "WeCat validation (Actions) trên PR #17",
+    "note": "Gate operator chạy trên commit master sau squash merge (khác 0.5.109 gate trên nhánh). Contract đổi: gpt-5.6-{luna,terra,sol}-image kiểm passthrough vì upstream gỡ khỏi catalog; gpt-6-sol-image kiểm có trong catalog."
+  },
+  "preRolloutProbe": {
+    "date": "2026-10-26",
+    "runningVersion": "0.5.109",
+    "model": "gpt-6-sol-image",
+    "quality": "low",
+    "primary": {"accountPlans": {"pro": 6}, "twoReferences": {"http": 200, "elapsedMs": 15537}, "oneReference": {"http": 200, "elapsedMs": 21434}},
+    "secondary": {"accountPlans": {"team": 4, "plus": 2}, "twoReferences": {"http": 200, "elapsedMs": 18166}, "oneReference": {"http": 200, "elapsedMs": 23384}},
+    "note": "Ảnh mẫu 128x128, không phải ảnh/prompt thật của app; output 1254x1254 như các model ảnh Codex khác."
+  },
+  "image": {
+    "name": "wecat-9router:0.5.111-605a6b0e2322",
+    "id": "sha256:745877d4118f8dad90dfe0fbf8b3a598eef65eb46eaabe78e060cb09e9c7227b",
+    "platform": "linux/amd64",
+    "nodeImage": "node:22.23.4-alpine@sha256:fe4f6d74e20370acb04ad889077d14d0f64a9c8ea6a42bc60cddf1e844699914",
+    "builtBy": "operator-local-gate",
+    "delivery": "docker save | ssh docker load",
+    "verifiedOnBothHosts": true
+  },
+  "targets": {
+    "secondary": {
+      "status": "production-verified",
+      "runningVersion": "0.5.111",
+      "rolloutDate": "2026-10-26",
+      "rolloutTimeUtc": "12:37",
+      "shadowAuthAndPreservation": "passed",
+      "apiKeyCount": {"before": 2, "after": 2},
+      "providerConnectionCount": {"before": 6, "after": 6},
+      "keysPreserved": true,
+      "configPreserved": true,
+      "monitorSeconds": 180,
+      "restartCount": 0,
+      "gate": {"protocol": "hold-if-idle", "healthy": true},
+      "publicChecks": {"login": 200, "modelsWithoutKey": 401},
+      "canary": {
+        "status": "passed",
+        "checkedAt": "2026-10-26T12:37:48.091Z",
+        "chat": {"http": 200, "elapsedMs": 1968},
+        "imageWithTwoReferences": {"model": "gpt-5.6-luna-image", "http": 200, "elapsedMs": 19330, "bytes": 962812, "width": 1254},
+        "toolImageWithTwoReferences": {"model": "gpt-image-2.5-sunburst", "host": "gpt-6-sol", "http": 200, "elapsedMs": 18981, "bytes": 967336, "width": 1254}
+      },
+      "rollback": "image 0.5.109 + SQLite backup trong bộ rollout"
+    },
+    "primary": {
+      "status": "production-verified",
+      "runningVersion": "0.5.111",
+      "rolloutDate": "2026-10-27",
+      "rolloutTimeUtc": "17:00 (26/10, 00:00 giờ VN)",
+      "launchedBy": "watcher trên host, 30 phút trước có 2 request",
+      "shadowAuthAndPreservation": "passed",
+      "apiKeyCount": {"before": 3, "after": 3},
+      "providerConnectionCount": {"before": 6, "after": 6},
+      "keysPreserved": true,
+      "configPreserved": true,
+      "monitorSeconds": 180,
+      "restartCount": 0,
+      "temporaryGate": "drained-and-removed; nginx trỏ thẳng router",
+      "tcpOom": false,
+      "publicChecks": {"login": 200, "modelsWithoutKey": 401},
+      "canary": {
+        "status": "passed",
+        "checkedAt": "2026-10-26T17:04:21.358Z",
+        "chat": {"http": 200, "elapsedMs": 3192},
+        "imageWithTwoReferences": {"model": "gpt-5.6-luna-image", "http": 200, "elapsedMs": 64039, "bytes": 172183, "width": 1254},
+        "toolImageWithTwoReferences": {"model": "gpt-image-2", "host": "gpt-6-sol", "http": 200, "elapsedMs": 22196, "bytes": 985935, "width": 1254}
+      },
+      "rollback": "image 0.5.109 + compose cũ + nginx.conf + backup /opt/9router/operator-0.5.111-20261026T170003Z"
+    }
+  },
+  "notes": [
+    "Model ảnh đã gỡ khỏi catalog (gpt-5.6-luna-image, mặc định app) chạy thật qua passthrough trên cả hai host.",
+    "Tool gpt-image-* chạy qua model điều phối gpt-6-sol trên tài khoản Pro, Team và Plus.",
+    "Không dùng GitHub Actions cho build/deploy; Actions chỉ chạy WeCat validation trên PR."
+  ]
+}

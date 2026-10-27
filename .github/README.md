@@ -6,13 +6,13 @@ Fork này **không phát triển tính năng riêng**. Mục đích là theo sá
 
 ## Tình trạng
 
-> Cập nhật 2026-10-16. Chi tiết và việc còn mở: [wecat/STATUS.md](../wecat/STATUS.md).
+> Cập nhật 2026-10-27. Chi tiết và việc còn mở: [wecat/STATUS.md](../wecat/STATUS.md).
 
 | | |
 |---|---|
-| Upstream | `decolua/9router`, đã đồng bộ **0.5.104** (tag `v0.5.104`, [`87a74e1b`](https://github.com/decolua/9router/commit/87a74e1bda3677193c6f71a7e2100c90311f0689)). |
+| Upstream | `decolua/9router`, đã đồng bộ **0.5.111** (tag `v0.5.111`, [`3a978a63`](https://github.com/decolua/9router/commit/3a978a631ad65529c06e48ce495092d5bba29f46)). |
 | Fork | Upstream cộng với `wecat/` (gate kiểm chứng, runbook, nhật ký sự cố). `master` chỉ nhận qua PR, gate chạy trên máy operator. |
-| Production | primary và secondary đều chạy **0.5.104** từ cùng image fork (`wecat-9router:0.5.104-fd6da50fd740`), canary/monitor đạt (secondary 16/10 11:41, primary 16/10 23:15 giờ VN sau một lượt rollback do W-017). Key/cấu hình giữ nguyên; image 0.5.99 và backup giữ làm rollback. |
+| Production | primary và secondary đều chạy **0.5.111** từ cùng image fork (`wecat-9router:0.5.111-605a6b0e2322`), canary/monitor đạt (secondary 26/10 19:37, primary 27/10 00:00 giờ VN). |
 | Phát hành | Workflow *WeCat validation* là check bắt buộc của PR; publish/watch tắt. Gate image chạy trên máy operator; deploy thủ công qua SSH, không qua registry/Actions. Model Codex cho app: [MODELS](../wecat/MODELS.md). |
 
 ## Khác gì upstream
