@@ -9,6 +9,16 @@ Cập nhật: **2026-10-27** (cả hai production chạy 0.5.111). Đây là nơ
 - Bản trước: **0.5.109** (`f39d8f07481ae8518e93175f0ecaaafa61573c6c`, [PR #16](https://github.com/wecat-team/9router/pull/16)).
 - PR #10 squash merge nên `master` không chứa tổ tiên upstream; `prepare-upstream` gặp 19 conflict (merge-base v0.5.95). Fork không sửa file nào trong số đó nên lấy nguyên bản upstream. PR nâng upstream sau nên giữ merge commit để tránh lặp lại.
 
+### Nâng 0.5.112
+
+- Upstream 0.5.111 → 0.5.112 (`1fe586bb1cf35e1ed0cb2150a8ef7d1db040b21d`): 14 commit, 48 file, áp diff (master mất tổ tiên upstream), 0 conflict, `treeDrift` sạch. Không đổi `custom-server.js`, auth, SQLite/migration, đường sinh ảnh, executor Codex hay `src/sse`; dependency không đổi (lockfile chỉ đổi version). DB tương thích rollback 0.5.111.
+- **Codex:** chỉ thêm `gpt-6.1-terra` (`responsesLite`, giá ước tính 1/5, context 500k); không gỡ model nào, mọi model app.wecat.vn đang dùng giữ nguyên. Xem [MODELS](MODELS.md).
+- **Chat non-stream:** upstream trả đúng status lỗi khi SSE có frame `error` trong `nonStreamingHandler`. Codex có `forceStream` nên chat `stream:false` đi qua `handleForcedSSEToJson` (không đổi): hành vi lỗi app nhận được không đổi.
+- **Dockerfile upstream:** thêm `npm install wreq-js playwright-core` không ghim version, chỉ cho OpenCode Free và provider web (lazy runtime). **Không chép** sang `wecat/Dockerfile`: WeCat không dùng các provider này, và cài không qua lockfile trái chính sách lock của fork. `lazyRuntime` không được executor Codex dùng.
+- Bảo mật: route mới `/api/oauth/minimax-code{,-global}/lease-{status,connect}` nhận đường dẫn data dir rồi kết nối unix socket theo đó; `dashboardGuard` khớp tiền tố nên các route này chỉ gọi từ local và bắt buộc đăng nhập. Header/IP/xác thực API key không đổi.
+- Phần còn lại không thuộc đường WeCat dùng: MiniMax Code lease, provider Nace Drex (System One), CommandCode headers, CodeBuddy headers, NVIDIA reasoning alias, DeepSeek PoW hash, Copilot Claude 5.5 thinking, schema Gemini, bulk-add key.
+- Gate operator trên candidate local (diagnostic cho khảo sát) đạt: ops, contracts, mutation, critical 93/93, build amd64, container smoke. Gate phát hành chạy lại trên commit `master` sau merge. Rollout: secondary lúc ít traffic, primary trong 00:00–07:00 giờ VN qua watcher (W-017).
+
 ### Nâng 0.5.111
 
 - Upstream 0.5.109 → 0.5.111 (`3a978a631ad65529c06e48ce495092d5bba29f46`): 17 commit, 56 file, áp diff (master mất tổ tiên upstream), 0 conflict, `treeDrift` sạch. Không đổi `custom-server.js`, auth, SQLite/migration, Dockerfile hay dependency (lockfile chỉ đổi version); DB tương thích rollback 0.5.109.

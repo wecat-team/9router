@@ -1,8 +1,8 @@
-# Model Codex qua 9Router (0.5.111)
+# Model Codex qua 9Router (0.5.112)
 
 Tài liệu đối chiếu cho app gọi gateway (app.wecat.vn và các app khác). Cập nhật file này mỗi khi nâng upstream có đổi catalog Codex.
 
-- Nguồn catalog: `open-sse/providers/registry/codex.js` tại upstream `v0.5.111` (`3a978a63`). App gọi với prefix `cx/`, ví dụ `cx/gpt-5.6-terra`.
+- Nguồn catalog: `open-sse/providers/registry/codex.js` tại upstream `v0.5.112` (`1fe586bb`). App gọi với prefix `cx/`, ví dụ `cx/gpt-5.6-terra`.
 - Giá: USD/1 triệu token vào/ra, lấy từ `open-sse/providers/pricing.js`. Đây là ước tính 9Router dùng cho trang Usage, **không phải hóa đơn**: Codex dùng quota tài khoản ChatGPT.
 - Bằng chứng production: số request thành công trong 14 ngày đến 16/10/2026, gộp theo model, không có dữ liệu khách hàng.
 - Model có trong catalog chưa chắc tài khoản dùng được. Trước khi bật model mới trong app, thử ít nhất một lượt thật với đúng payload của app.
@@ -12,12 +12,13 @@ Tài liệu đối chiếu cho app gọi gateway (app.wecat.vn và các app khá
 | Model (`cx/…`) | Giá vào/ra | app.wecat.vn | Production 14 ngày | Ghi chú |
 |---|---|---|---|---|
 | `gpt-5.6-luna` | 1 / 6 | có | primary 1 | rẻ nhất họ 5.6 |
-| `gpt-5.6-terra` | 2,5 / 15 | có, **mặc định** text/copy | primary ~131k | canary chat mỗi lượt rollout |
+| `gpt-5.6-terra` | 2,5 / 15 | có (mặc định text/copy đến 27/10) | primary ~131k | canary chat mỗi lượt rollout |
 | `gpt-5.6-sol` | 5 / 30 | có | primary ~10k | kiểm qua HTTPS 16/10: 200 |
 | `gpt-6-astra` | 10 / 50 | có | secondary 431 | đắt nhất |
 | `gpt-6.1-sol` | 2 / 10 | **chưa** | secondary 38 | `responsesLite`; preset mặc định của Codex CLI upstream |
-| `gpt-6-sol` | 2 / 10 | **chưa** | chưa có | `responsesLite`; từ 0.5.111 là model điều phối tool `gpt-image-*` (canary mỗi lượt rollout kiểm qua tool); chat thử 27/10: 200 |
-| `gpt-6-luna` | 0,1 / 0,5 | **chưa** | chưa có | `responsesLite`; rẻ nhất catalog; chat thử 27/10: 200 (~3 s), câu mô tả sản phẩm dùng được |
+| `gpt-6.1-terra` | 1 / 5 | **chưa** | chưa có | **mới từ 0.5.112**; `responsesLite`, thinking GPT-6-Lite, context 500k trên Codex. Rẻ hơn `gpt-6-sol`; chưa thử với tài khoản WeCat |
+| `gpt-6-sol` | 2 / 10 | có, **mặc định** text nặng (từ 27/10) | chưa có | `responsesLite`; từ 0.5.111 là model điều phối tool `gpt-image-*` (canary mỗi lượt rollout kiểm qua tool); chat thử 27/10: 200 |
+| `gpt-6-luna` | 0,1 / 0,5 | có, **mặc định** text nhẹ/copy (từ 27/10) | chưa có | `responsesLite`; rẻ nhất catalog; chat thử 27/10: 200 (~3 s), câu mô tả sản phẩm dùng được |
 
 Biến thể không dùng cho app: hậu tố `[1m]` (context mở rộng, cùng model upstream), hậu tố `-review` (tính vào quota review), `gpt-daybreak-blue-latest`, `gpt-reserve`, `codex-auto-review`.
 
@@ -25,10 +26,10 @@ Biến thể không dùng cho app: hậu tố `[1m]` (context mở rộng, cùng
 
 | Model (`cx/…`) | Kiểu | app.wecat.vn | Production 14 ngày | Ghi chú |
 |---|---|---|---|---|
-| `gpt-5.6-luna-image` | model chính vẽ | có, **mặc định** | primary ~83k | **gỡ khỏi catalog từ 0.5.111**, request vẫn đi tiếp (contract); canary ảnh mỗi lượt rollout |
+| `gpt-5.6-luna-image` | model chính vẽ | có (mặc định ảnh đến 27/10) | primary ~83k | **gỡ khỏi catalog từ 0.5.111**, request vẫn đi tiếp (contract); canary ảnh mỗi lượt rollout |
 | `gpt-5.6-terra-image` | model chính vẽ | có, mặc định Làm mới listing | primary ~12k | gỡ khỏi catalog từ 0.5.111, request vẫn đi tiếp (contract) |
 | `gpt-5.6-sol-image` | model chính vẽ | có | primary ~8k | gỡ khỏi catalog từ 0.5.111, request vẫn đi tiếp (contract); thay `gpt-5.5-image` |
-| `gpt-6-sol-image` | model chính vẽ | **chưa** | chưa có | có trong catalog từ 0.5.111, thay nhóm `gpt-5.6-*-image`; thử 27/10 với 2 ảnh tham chiếu: 200, PNG 1254×1254, ~19–29 s. Ứng viên mặc định ảnh của app, chờ A/B ảnh thật |
+| `gpt-6-sol-image` | model chính vẽ | có, **mặc định** ảnh (từ 27/10) | chưa có | có trong catalog từ 0.5.111, thay nhóm `gpt-5.6-*-image`; thử 27/10 với 2 ảnh tham chiếu: 200, PNG 1254×1254, ~19–29 s. Ứng viên mặc định ảnh của app, chờ A/B ảnh thật |
 | `gpt-image-2.5` | tool | có | secondary 3 | |
 | `gpt-image-2.5-flare` | tool | có | chưa có | |
 | `gpt-image-2.5-sunburst` | tool | có | secondary 852 | canary secondary |
