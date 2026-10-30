@@ -1,0 +1,154 @@
+{
+  "schema": 1,
+  "version": "0.5.112",
+  "upstreamCommit": "1fe586bb1cf35e1ed0cb2150a8ef7d1db040b21d",
+  "forkCommit": "42b7ee168bb836d24805cc697d5d111c554bfc1e",
+  "date": "2026-10-30",
+  "status": "production-verified",
+  "pullRequest": "https://github.com/wecat-team/9router/pull/20",
+  "validation": {
+    "pullRequestCheck": "WeCat release gate passed on 069be187",
+    "operatorReceipt": "passed",
+    "criticalTests": 93,
+    "containerSmoke": "passed",
+    "offlineRealProviderCalls": 0,
+    "upstreamApply": "diff (master mất tổ tiên upstream), 0 conflict, treeDrift sạch"
+  },
+  "image": {
+    "name": "wecat-9router:0.5.112-42b7ee168bb8",
+    "id": "sha256:5bbb5c158d8a9854f5b179239bf161eb50a63f23c46f13123b8f267dec6646f4",
+    "platform": "linux/amd64",
+    "builtBy": "operator-local-gate",
+    "delivery": "docker save | ssh docker load",
+    "verifiedOnBothHosts": true
+  },
+  "targets": {
+    "secondary": {
+      "status": "production-verified",
+      "runningVersion": "0.5.112",
+      "rolloutDate": "2026-10-29",
+      "rolloutTimeUtc": "02:07",
+      "trafficBeforeRollout": {
+        "windowMinutes": 30,
+        "requests": 21
+      },
+      "shadowAuthAndPreservation": "passed",
+      "apiKeyCount": {
+        "before": 2,
+        "after": 2
+      },
+      "providerConnectionCount": {
+        "before": 6,
+        "after": 6
+      },
+      "keysPreserved": true,
+      "configPreserved": true,
+      "sqliteIntegrity": "ok",
+      "monitorSeconds": 180,
+      "restartCount": 0,
+      "gate": {
+        "protocol": "hold-if-idle",
+        "healthy": true,
+        "held": false,
+        "queued": 0
+      },
+      "publicChecks": {
+        "login": 200,
+        "modelsWithoutKey": 401
+      },
+      "canary": {
+        "status": "passed",
+        "checkedAt": "2026-10-29T02:08:39.597Z",
+        "chat": {
+          "http": 200,
+          "elapsedMs": 2636
+        },
+        "imageWithTwoReferences": {
+          "model": "gpt-5.6-luna-image",
+          "http": 200,
+          "elapsedMs": 17705,
+          "bytes": 972079,
+          "width": 1254
+        },
+        "toolImageWithTwoReferences": {
+          "model": "gpt-image-2.5-sunburst",
+          "host": "gpt-6-sol",
+          "http": 200,
+          "elapsedMs": 19569,
+          "bytes": 999108,
+          "width": 1254
+        },
+        "realProviderCalls": 3
+      },
+      "rollback": "image 0.5.111 + SQLite backup trong bộ rollout"
+    },
+    "primary": {
+      "status": "production-verified",
+      "runningVersion": "0.5.112",
+      "rolloutDate": "2026-10-30",
+      "rolloutTimeVn": "00:00",
+      "launchedBy": "watcher (00:00–07:00 giờ VN, <50 request/30 phút)",
+      "trafficBeforeRollout": {
+        "windowMinutes": 30,
+        "requests": 0
+      },
+      "shadowAuthAndPreservation": "passed",
+      "apiKeyCount": {
+        "before": 3,
+        "after": 3
+      },
+      "providerConnectionCount": {
+        "before": 6,
+        "after": 6
+      },
+      "keysPreserved": true,
+      "configPreserved": true,
+      "sqliteIntegrity": "ok",
+      "monitorSeconds": 180,
+      "restartCount": 0,
+      "temporaryGateDrainedAndRemoved": true,
+      "nginxRestoredDirect": true,
+      "canary": {
+        "status": "passed",
+        "checkedAt": "2026-10-29T17:04:23.933Z",
+        "chat": {
+          "http": 200,
+          "elapsedMs": 3193
+        },
+        "imageWithTwoReferences": {
+          "model": "gpt-5.6-luna-image",
+          "http": 200,
+          "elapsedMs": 21416,
+          "bytes": 947254,
+          "width": 1254
+        },
+        "toolImageWithTwoReferences": {
+          "model": "gpt-image-2",
+          "host": "gpt-6-sol",
+          "http": 200,
+          "elapsedMs": 19295,
+          "bytes": 996495,
+          "width": 1254
+        },
+        "realProviderCalls": 3
+      },
+      "rollback": "image 0.5.111 + compose cũ + SQLite backup"
+    }
+  },
+  "rollback": {
+    "image": "wecat-9router:0.5.111-605a6b0e2322",
+    "imageId": "sha256:745877d4118f8dad90dfe0fbf8b3a598eef65eb46eaabe78e060cb09e9c7227b",
+    "oldImageRetainedOnBothHosts": true,
+    "schemaChanged": false,
+    "databaseSnapshotRestored": false
+  },
+  "notes": "Codex chỉ thêm gpt-6.1-terra; không gỡ model nào. Không chép thay đổi Dockerfile upstream (wreq-js/playwright-core không ghim version, WeCat không dùng).",
+  "appHandoff": {
+    "status": "not-needed",
+    "date": "2026-10-30",
+    "removedModelsInUse": [],
+    "probe": "skipped",
+    "appPullRequest": null,
+    "notes": "app-handoff v0.5.111: không model nào bị gỡ, chỉ thêm gpt-6.1-terra (1/5). Model app đang dùng giữ nguyên. Thêm gpt-6.1-terra vào app là tùy chọn, cần thử thật với payload app trước."
+  }
+}
