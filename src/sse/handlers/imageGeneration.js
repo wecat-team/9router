@@ -20,6 +20,19 @@ import { saveRequestUsage } from "@/lib/usageDb.js";
 // Providers that don't require credentials (noAuth)
 const NO_AUTH_PROVIDERS = new Set(["sdwebui", "comfyui", "veoaifree-web"]);
 
+// WeCat: "did not return an image" ở mọi tài khoản nghĩa là model đó không vẽ được, không phải
+// giới hạn tốc độ. Giữ 502 và thông điệp để client cũ vẫn nhận ra, nhưng bỏ retry-after và đuôi
+// "(reset after …)", gắn x-error-code để client không gửi lại cùng model.
+const IMAGE_NOT_RETURNED = /did not return an image/i;
+
+export function isImageNotReturnedError(message) {
+  return typeof message === "string" && IMAGE_NOT_RETURNED.test(message);
+}
+
+export function imageNotReturnedResponse(status, message) {
+  return errorResponse(status || HTTP_STATUS.BAD_GATEWAY, message, { "x-error-code": "image_not_returned" });
+}
+
 function recordImageRequestUsage({ provider, model, connectionId, apiKey, endpoint, usage }) {
   if (!usage || typeof usage !== "object") return;
   const promptTokens = usage.prompt_tokens;
@@ -124,11 +137,13 @@ async function handleSingleModelImage(body, modelStr, { wantsStream, binaryOutpu
       if (credentials?.allRateLimited) {
         const errorMsg = lastError || credentials.lastError || "Unavailable";
         const status = lastStatus || Number(credentials.lastErrorCode) || HTTP_STATUS.SERVICE_UNAVAILABLE;
+        if (isImageNotReturnedError(errorMsg)) return imageNotReturnedResponse(status, `[${provider}/${model}] ${errorMsg}`);
         return unavailableResponse(status, `[${provider}/${model}] ${errorMsg}`, credentials.retryAfter, credentials.retryAfterHuman);
       }
       if (excludeConnectionIds.size === 0) {
         return errorResponse(HTTP_STATUS.BAD_REQUEST, `No credentials for provider: ${provider}`);
       }
+      if (isImageNotReturnedError(lastError)) return imageNotReturnedResponse(lastStatus, lastError);
       return errorResponse(lastStatus || HTTP_STATUS.SERVICE_UNAVAILABLE, lastError || "All accounts unavailable");
     }
 

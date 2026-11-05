@@ -29,6 +29,9 @@ export const FORK_OWNED_FILES = [
   'AGENTS.md',
   'CLAUDE.md',
   'tests/unit/codex-refresh-token.test.js',
+  // Lỗi Codex không trả ảnh: 502 không retry-after + x-error-code (W-018).
+  'src/sse/handlers/imageGeneration.js',
+  'tests/unit/wecat-image-not-returned.test.js',
 ];
 
 export function isForkOwned(file) {

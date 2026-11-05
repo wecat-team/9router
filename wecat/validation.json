@@ -12,7 +12,8 @@
     "unit/custom-server-peer-headers.test.js",
     "unit/auth-status.test.js",
     "unit/db-sqlite-vs-lowdb.test.js",
-    "unit/openai-responses-completed-usage.test.js"
+    "unit/openai-responses-completed-usage.test.js",
+    "unit/wecat-image-not-returned.test.js"
   ],
   "upstreamVersion": "0.5.112",
   "packageManifestSha256": "765f303a617cf9554ed8be1279daca1968d1775f6944af7094a0b495dafe149d",
