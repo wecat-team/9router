@@ -30,21 +30,22 @@ Biến thể không dùng cho app: hậu tố `[1m]` (context mở rộng, cùng
 | `gpt-5.6-terra-image` | model chính vẽ | có, mặc định Làm mới listing | primary ~12k | gỡ khỏi catalog từ 0.5.111, request vẫn đi tiếp (contract) |
 | `gpt-5.6-sol-image` | model chính vẽ | có | primary ~8k | gỡ khỏi catalog từ 0.5.111, request vẫn đi tiếp (contract); thay `gpt-5.5-image` |
 | `gpt-6-sol-image` | model chính vẽ | có, **mặc định** ảnh (từ 27/10) | chưa có | có trong catalog từ 0.5.111, thay nhóm `gpt-5.6-*-image`; thử 27/10 với 2 ảnh tham chiếu: 200, PNG 1254×1254, ~19–29 s. Ứng viên mặc định ảnh của app, chờ A/B ảnh thật |
-| `gpt-image-2.5` | tool | có | secondary 3 | |
-| `gpt-image-2.5-flare` | tool | có | chưa có | |
-| `gpt-image-2.5-sunburst` | tool | có | secondary 852 | canary secondary |
-| `gpt-image-2` | tool | có | primary ~1,6k (đến 14/10) | canary primary |
-| `gpt-image-1.5` | tool | có | secondary 2 | |
+| `gpt-image-2.5` | tool | **app đã thôi dùng** (05/11) | secondary 3 | **hỏng từ 05/11 (W-018)**: Codex không trả ảnh ở mọi tài khoản |
+| `gpt-image-2.5-flare` | tool | **app đã thôi dùng** (05/11) | chưa có | **hỏng từ 05/11 (W-018)** |
+| `gpt-image-2.5-sunburst` | tool | **app đã thôi dùng** (05/11) | secondary 852 | **hỏng từ 05/11 (W-018)**; vẫn là model canary secondary (bắt khi Codex trả ảnh lại) |
+| `gpt-image-2` | tool | **app đã thôi dùng** (05/11) | primary ~850/ngày đến 05/11 | **hỏng từ 05/11 (W-018)**; vẫn là model canary primary |
+| `gpt-image-1.5` | tool | **app đã thôi dùng** (05/11) | secondary 2 | **hỏng từ 05/11 (W-018)** |
 
 - **Model chính vẽ** (`<model>-image`): 9Router bỏ hậu tố `-image` rồi gọi model đó kèm tool sinh ảnh. Chi phí theo model chính.
-- **Tool** (`gpt-image-*`): model điều phối là `gpt-6-sol` từ 0.5.111 (0.5.109: `gpt-5.6-terra`, 0.5.104: `gpt-5.6-sol`, trước đó `gpt-5.5`), model vẽ là chính model tool. Nếu tài khoản nào không được dùng model điều phối thì mọi tool ảnh trên tài khoản đó lỗi; canary `gpt-image-*` bắt trường hợp này.
+- **Tool** (`gpt-image-*`): **cả nhóm hỏng từ 05/11/2026 (W-018)** — Codex trả 502 "did not return an image" ở mọi tài khoản, trên cả hai production; đây là thay đổi phía Codex, 9Router không đổi gì. app.wecat.vn đã map sang `gpt-6-sol-image` ([#482](https://github.com/wecat-team/wecat-product-intelligence/pull/482)). Mô tả bên dưới là hành vi khi nhóm này chạy lại. Model điều phối là `gpt-6-sol` từ 0.5.111 (0.5.109: `gpt-5.6-terra`, 0.5.104: `gpt-5.6-sol`, trước đó `gpt-5.5`), model vẽ là chính model tool. Nếu tài khoản nào không được dùng model điều phối thì mọi tool ảnh trên tài khoản đó lỗi; canary `gpt-image-*` bắt trường hợp này.
 - Ảnh tham chiếu: `image` là chuỗi khi có một ảnh, `images` là mảng khi có nhiều ảnh; `response_format=binary` đặt trên query.
 
 ## Đã gỡ hoặc không có trong catalog
 
 - `gpt-5.5`, `gpt-5.5-review`, `gpt-5.5-image`, `gpt-5.3-image`: upstream gỡ từ 0.5.104 vì coi là model đã ngừng. Request vẫn được chuyển lên upstream, nhưng có thể trả 400 bất cứ lúc nào. app.wecat.vn đã thôi dùng (map sang `gpt-5.6-sol-image` / `gpt-5.6-terra`, migration 0080).
 - `gpt-5.6-luna-image`, `gpt-5.6-terra-image`, `gpt-5.6-sol-image`: upstream gỡ từ 0.5.111 vì coi `gpt-6-sol-image` thay thế. Request vẫn được chuyển lên upstream với model chính `gpt-5.6-*` kèm đủ ảnh tham chiếu (contract kiểm offline mỗi lần gate), chỉ mất khỏi `/v1/models`/dashboard. app.wecat.vn ghi cứng danh sách model nên không bị ảnh hưởng. Đổi mặc định sang `gpt-6-sol-image` là việc riêng của app, chỉ làm sau khi thử thật đạt.
-- Chỉ `gpt-6-sol-image` có trong catalog. Các `gpt-6-…-image` khác vẫn được chuyển thành model chính kèm tool sinh ảnh. `gpt-6-luna-image` thử 27/10 với 2 ảnh tham chiếu: 200, ~20 s (rẻ nhất, nhưng không có trong catalog nên cùng rủi ro bị chặn như nhóm `gpt-5.6-*-image`). Model khác chưa được kiểm; app từng ghi nhận `gpt-6-astra-image` kèm ảnh tham chiếu trả 502 (19/09). Không bật model nào cho đến khi thử đạt với ảnh tham chiếu.
+- Nhóm tool `gpt-image-*` tuy có trong catalog nhưng hỏng từ 05/11 (W-018, phía Codex); không dùng cho đến khi thử thật đạt lại.
+- Chỉ `gpt-6-sol-image` có trong catalog (model ảnh dạng model chính). Các `gpt-6-…-image` khác vẫn được chuyển thành model chính kèm tool sinh ảnh. `gpt-6-luna-image` thử 27/10 với 2 ảnh tham chiếu: 200, ~20 s (rẻ nhất, nhưng không có trong catalog nên cùng rủi ro bị chặn như nhóm `gpt-5.6-*-image`). Model khác chưa được kiểm; app từng ghi nhận `gpt-6-astra-image` kèm ảnh tham chiếu trả 502 (19/09). Không bật model nào cho đến khi thử đạt với ảnh tham chiếu.
 
 ## Khi cập nhật danh sách model ở app
 
