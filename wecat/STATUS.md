@@ -82,7 +82,7 @@ Lưu ý vận hành:
 1. **`docker-compose.yml` của upstream trỏ `decolua/9router:latest`.** Không dùng file này cho production WeCat. Giữ nguyên vì là file upstream.
 2. **Gate tạm của primary (W-017).** `wecat/ops/gate.mjs` đã thả hàng đợi theo nhịp, giới hạn `active` khi xả, bỏ request mất client và có timeout upstream (test offline trên Node 22/24). Chưa kiểm bằng rollout thật giờ cao điểm: vẫn ưu tiên 00:00–07:00 giờ VN; lượt sau phải chép `gate.mjs` mới vào bộ rollout.
 3. **Squash merge làm mất tổ tiên upstream.** `prepare-upstream` tự áp diff khi `master` không chứa upstream đã chấp nhận, và chặn cây lệch upstream ngoài file fork ([README](README.md#theo-dõi-upstream)). Dựng lại lần 0.5.99 → 0.5.104: 0 conflict. Sẽ dùng thật ở lần nâng kế tiếp.
-5. **Bản vá tạm upstream #5477 (W-018).** Fork áp [decolua/9router#5477](https://github.com/decolua/9router/pull/5477) (bỏ `reasoning.effort` ở đường ảnh tool `gpt-image-*`) để thử trên **secondary**; **primary giữ image 0.5.112 `42b7ee16`, chờ upstream merge**. Khi upstream đã merge và fork nâng lên bản chứa nó, gỡ `codex.js` và `image-generation.test.js` khỏi `FORK_OWNED_FILES`.
+5. **Bản vá tạm upstream #5477 (W-018).** Fork áp [decolua/9router#5477](https://github.com/decolua/9router/pull/5477) (bỏ `reasoning.effort` ở đường ảnh tool `gpt-image-*`). **Secondary** chạy image `0.5.112-06c0b645f32b` từ 06/11, đã kiểm thật (`gpt-image-2.5-sunburst`, `gpt-image-2.5` đều 200). **Primary giữ `42b7ee16`, chờ upstream merge.** Khi fork nâng lên bản upstream có #5477, gỡ `codex.js` và `image-generation.test.js` khỏi `FORK_OWNED_FILES`.
 4. **Script rollout không có trong repo.** `operator-rollout.py` chỉ nằm trong bộ rollout trên host (chứa đường dẫn và tên container của từng host); RUNBOOK mô tả cách dùng và các mốc log.
 
 ## Lịch sử
@@ -105,3 +105,4 @@ Lưu ý vận hành:
 | 2026-10-27 | primary → 0.5.111 lúc 00:00 giờ VN (watcher, 2 request/30 phút) đạt canary/monitor. Cả hai production chạy 0.5.111 |
 | 2026-10-29 | Nâng upstream 0.5.112 ([PR #20](https://github.com/wecat-team/9router/pull/20)): Codex chỉ thêm `gpt-6.1-terra`. secondary → 0.5.112 lúc 09:07 giờ VN đạt canary/monitor |
 | 2026-10-30 | primary → 0.5.112 lúc 00:00 giờ VN (watcher, 0 request/30 phút) đạt canary/monitor. Cả hai production chạy 0.5.112; bàn giao app not-needed |
+| 2026-11-06 | secondary → image fork `0.5.112-06c0b645f32b` (áp upstream #5477, W-018) lúc 09:35 giờ VN, canary ảnh tool `gpt-image-2.5-sunburst` 200. primary giữ `42b7ee16` chờ upstream merge |

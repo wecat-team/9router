@@ -1,0 +1,122 @@
+{
+  "schema": 1,
+  "version": "0.5.112",
+  "variant": "fork-patch-upstream-5477",
+  "upstreamCommit": "1fe586bb1cf35e1ed0cb2150a8ef7d1db040b21d",
+  "forkCommit": "06c0b645f32bcbe3deeda3164797c9fe3d594c99",
+  "date": "2026-11-06",
+  "status": "partial-rollout-secondary-only",
+  "pullRequest": "https://github.com/wecat-team/9router/pull/24",
+  "upstreamPatch": {
+    "pullRequest": "https://github.com/decolua/9router/pull/5477",
+    "head": "d712dbad4037da583028228aaad13ccb33efa348",
+    "appliedUnchanged": true,
+    "upstreamStatus": "open",
+    "forkOwnedFilesTemporary": [
+      "open-sse/handlers/imageProviders/codex.js",
+      "tests/unit/image-generation.test.js"
+    ]
+  },
+  "validation": {
+    "pullRequestCheck": "WeCat release gate passed on 83a1cb20",
+    "operatorReceipt": "passed",
+    "criticalTests": 97,
+    "containerSmoke": "passed",
+    "offlineRealProviderCalls": 0
+  },
+  "image": {
+    "name": "wecat-9router:0.5.112-06c0b645f32b",
+    "id": "sha256:512246deb8d9ca95eb6fdbc55d6fc14d9abde33c81962dcde6790c8037d33387",
+    "platform": "linux/amd64",
+    "builtBy": "operator-local-gate",
+    "delivery": "docker save | ssh docker load",
+    "verifiedOnHosts": [
+      "secondary"
+    ]
+  },
+  "targets": {
+    "secondary": {
+      "status": "production-verified",
+      "runningVersion": "0.5.112 (fork 06c0b645)",
+      "rolloutDate": "2026-11-06",
+      "rolloutTimeUtc": "02:35",
+      "shadowAuthAndPreservation": "passed",
+      "apiKeyCount": {
+        "before": 2,
+        "after": 2
+      },
+      "providerConnectionCount": {
+        "before": 5,
+        "after": 5
+      },
+      "keysPreserved": true,
+      "configPreserved": true,
+      "sqliteIntegrity": "ok",
+      "monitorSeconds": 180,
+      "restartCount": 0,
+      "gate": {
+        "protocol": "hold-if-idle",
+        "healthy": true,
+        "held": false,
+        "queued": 0
+      },
+      "publicChecks": {
+        "login": 200,
+        "modelsWithoutKey": 401
+      },
+      "canary": {
+        "status": "passed",
+        "checkedAt": "2026-11-06T02:36:43.141Z",
+        "chat": {
+          "http": 200,
+          "elapsedMs": 2270
+        },
+        "imageWithTwoReferences": {
+          "model": "gpt-5.6-luna-image",
+          "http": 200,
+          "elapsedMs": 51905,
+          "bytes": 138756,
+          "width": 1254
+        },
+        "toolImageWithTwoReferences": {
+          "model": "gpt-image-2.5-sunburst",
+          "host": "gpt-6-sol",
+          "http": 200,
+          "elapsedMs": 17694,
+          "bytes": 964730,
+          "width": 1254
+        },
+        "realProviderCalls": 3
+      },
+      "manualCheck": {
+        "model": "gpt-image-2.5",
+        "via": "dashboard Text-to-Image (SSE)",
+        "http": 200,
+        "elapsedMs": 30864,
+        "by": "operator"
+      },
+      "rollback": "image 0.5.112 42b7ee16 + SQLite backup trong bộ rollout"
+    },
+    "primary": {
+      "status": "unchanged-awaiting-upstream-merge",
+      "runningVersion": "0.5.112 (fork 42b7ee16)",
+      "notes": "Giữ nguyên theo quyết định operator; nâng khi upstream merge #5477 và fork lên bản chứa nó."
+    }
+  },
+  "rollback": {
+    "image": "wecat-9router:0.5.112-42b7ee168bb8",
+    "imageId": "sha256:5bbb5c158d8a9854f5b179239bf161eb50a63f23c46f13123b8f267dec6646f4",
+    "retainedOnSecondary": true,
+    "schemaChanged": false,
+    "databaseSnapshotRestored": false
+  },
+  "notes": "Lượt rollout lẻ, cùng version 0.5.112, chỉ đổi image fork để thử bản vá đường ảnh tool (W-018). Script rollout dùng biến thể cùng-version (kiểm label 0.5.112 → 0.5.112).",
+  "appHandoff": {
+    "status": "not-needed",
+    "date": "2026-11-06",
+    "removedModelsInUse": [],
+    "probe": "passed",
+    "appPullRequest": null,
+    "notes": "Không đổi catalog. app.wecat.vn (primary) đã ẩn gpt-image-* ở wecat-product-intelligence#482; dùng lại chỉ sau khi primary có bản vá. veoflow.wecat.vn thử trên secondary."
+  }
+}
