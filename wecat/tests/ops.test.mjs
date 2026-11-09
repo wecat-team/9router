@@ -8,6 +8,7 @@ import { createRequire } from 'node:module';
 import { patchIp } from '../patch-ip.mjs';
 import { assertReceipt, redact, requireLocalUrl } from '../release.mjs';
 import { createRouterGate } from '../ops/gate.mjs';
+import { spawnSync } from 'node:child_process';
 const require=createRequire(import.meta.url);
 function seeHeaders(remote, forwarded, trusted) {
   let handler;let result;
@@ -159,4 +160,8 @@ test('request bị hủy khi đang xếp hàng không gọi upstream sau resume'
   for(let i=0;i<30&&gate.status().queued;i++)await new Promise(r=>setTimeout(r,10));
   assert.equal(gate.status().queued,0);await fetch(admin+'/resume',{method:'POST'});assert.equal(calls,0);
  }finally{await gate.close();await new Promise(r=>upstream.close(r));}
+});
+test('cảnh báo lỗi API (alert.py): parse log, gộp/tắt tiếng, che email, không lộ IP',()=>{
+  const r=spawnSync('python3',['wecat/ops/alert.py','--self-test'],{encoding:'utf8'});
+  assert.equal(r.status,0,r.stderr+r.stdout);assert.match(r.stdout,/alert self-test ok/);
 });

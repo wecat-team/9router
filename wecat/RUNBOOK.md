@@ -98,6 +98,29 @@ node wecat/app-handoff.mjs v<bản-production-cũ>   # offline: diff catalog/đ�
 
 Có thay đổi model thì thêm số liệu usage và thử thật (`--usage`, `--probe-live --allow-live`), rồi gửi `wecat/.reports/app-handoff-<version>.md` cho agent ở repo app. Ghi `appHandoff` vào ledger. Không có thay đổi thì ghi `not-needed`.
 
+## Cảnh báo lỗi API (Telegram)
+
+`wecat/ops/alert.py` chạy bằng cron 5 phút/lần trên mỗi host, gửi tin cho operator khi app nhận lỗi. Script chỉ dùng thư viện chuẩn Python 3, không gọi provider, không tốn quota.
+
+- **Nguồn**: access log của reverse proxy (primary: `timing.log` của nginx; secondary: log JSON của container Caddy, lọc theo host của router). Chỉ tính đường API `/v1/...`, nên bot quét web không gây cảnh báo. Nguyên nhân rút gọn lấy từ `docker logs` của container 9router trong cùng khung giờ, có ghi chú là gồm cả lỗi đã tự chuyển tài khoản thành công.
+- **Khi nào báo**: có bất kỳ 4xx/5xx nào trên đường API, riêng 499 (app tự ngắt) từ 3 lần/khung. Bỏ `401 GET /v1/models` (phép thử không kèm key của rollout). Sau một tin, lỗi trong 30 phút gộp vào tin kế tiếp; 15 phút không lỗi thì báo "ổn lại".
+- **Báo riêng**: tài khoản Codex có OAuth token bị vô hiệu (nhắc lại sau 6 giờ nếu chưa đăng nhập lại), container 9router không chạy hoặc tự restart. Trong lúc `operator-rollout.py` chạy thì không báo trạng thái container.
+- **Giới hạn**: Caddy ghi status 0 cho request đi qua gate dù 9router trả 200, nên secondary không thấy được 499; script coi status 0 là không lỗi.
+- **Không gửi**: prompt, ảnh, IP, header, token. Email tài khoản được che (`abc***@domain`).
+
+Cài trên host (file env quyền 600, ngoài repo):
+
+```sh
+install -D -m 755 alert.py /opt/wecat-alert/alert.py      # chép từ commit đã merge
+# /root/.wecat-telegram.env: TG_TOKEN=..., TG_CHAT=...
+# /root/.wecat-alert.env:    ALERT_ROLE=<primary|secondary>, ALERT_SOURCE=nginx:<timing.log>|caddy:<container Caddy>,
+#                            ALERT_CADDY_HOST=<host router> (chỉ caddy), ALERT_CONTAINER=<container 9router>
+ALERT_DRY_RUN=1 ALERT_STATE=$(mktemp -d) python3 /opt/wecat-alert/alert.py --env /root/.wecat-telegram.env --env /root/.wecat-alert.env
+echo '1-59/5 * * * * root /usr/bin/python3 /opt/wecat-alert/alert.py --env /root/.wecat-telegram.env --env /root/.wecat-alert.env >> /var/log/wecat-alert.log 2>&1' > /etc/cron.d/wecat-9router-alert
+```
+
+State nằm ở `/var/lib/wecat-alert/state.json`. Gửi Telegram lỗi thì không lưu state, lượt sau đọc bù (tối đa 1 giờ). Sửa script thì chạy `python3 wecat/ops/alert.py --self-test` (nằm trong ops tests của gate), rồi chép lại lên cả hai host và so md5.
+
 ## Bằng chứng cần lưu
 
 Upstream SHA, fork SHA, dependency hashes, image digest, thời điểm/role, backup path riêng tư, key/provider preservation (boolean/count, không giá trị), canary result, health/RestartCount, gate resumed, rollback decision. Receipt local và canary prod phải được ghi thành hai loại bằng chứng riêng.

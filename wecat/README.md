@@ -21,7 +21,7 @@ Nếu máy đã có Chrome, có thể đặt `WECAT_CHROME_EXECUTABLE` thành đ
 
 Gate thực hiện:
 
-1. Ops tests: proxy IP, lỗi patch, giữ/drain request, request bị hủy, PNG lỗi, bảo vệ receipt và canary thật.
+1. Ops tests: proxy IP, lỗi patch, giữ/drain request, request bị hủy, PNG lỗi, bảo vệ receipt, canary thật và cảnh báo lỗi API (`wecat/ops/alert.py --self-test`, cần `python3`).
 2. Ảnh: các model WeCat dùng, zero/one/multiple input images, thứ tự source/reference, size/quality/detail, SSE collection và binary endpoint.
 3. Mutation: chủ động bỏ ảnh tham chiếu; test phải đỏ, rồi hoàn trả source.
 4. Tám suite upstream quan trọng, chạy từ `tests/`, không chạy các suite gọi provider thật.
