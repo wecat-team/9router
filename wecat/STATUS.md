@@ -9,6 +9,14 @@ Cập nhật: **2026-10-30** (cả hai production chạy 0.5.112). Đây là nơ
 - Bản trước: **0.5.111** (`3a978a631ad65529c06e48ce495092d5bba29f46`, [PR #17](https://github.com/wecat-team/9router/pull/17)).
 - PR #10 squash merge nên `master` không chứa tổ tiên upstream; `prepare-upstream` gặp 19 conflict (merge-base v0.5.95). Fork không sửa file nào trong số đó nên lấy nguyên bản upstream. PR nâng upstream sau nên giữ merge commit để tránh lặp lại.
 
+### Nâng 0.5.116
+
+- Upstream 0.5.112 → 0.5.116 (`1339107e624d1ab150c6a0c2c2ee22caa7e9db2f`): 29 commit, 95 file, áp diff, `treeDrift` sạch. Conflict chỉ ở hai file fork-owned tạm của bản vá #5477: upstream đã merge #5477 (điều chỉnh cho endpoint ảnh native) nên lấy nguyên bản upstream và gỡ khỏi `FORK_OWNED_FILES`.
+- **Ảnh Codex (W-018):** 0.5.116 có sẵn bản sửa đường ảnh tool; request tool không ảnh tham chiếu, size `auto` đi endpoint native mới. Thêm `gpt-image-2.6-flare`, `gpt-image-2.6-sunburst`. Đường model chính (`*-image`) không đổi.
+- **Dependency:** `undici` 7.30.1 → **8.12.4** (major; engines node >=22.19, image dùng 22.23.4). `proxyFetch` luôn gọi fetch của gói undici; test refresh Codex phải mock `undici` (trước đó 4 test gọi thật `auth.openai.com` với token giả), file test thành fork-owned.
+- **Bảo mật:** route mới `/api/oauth/commandcode/auto-import` trả `apiKey` đọc từ `~/.commandcode/auth.json` nhưng upstream không thêm vào `ALWAYS_PROTECTED`/`LOCAL_ONLY_PATHS` như các auto-import khác; fork thêm (`src/dashboardGuard.js` thành fork-owned).
+- Không đổi `custom-server.js`, auth, SQLite/migration, `imageGeneration.js` (bản vá #22 giữ nguyên).
+
 ### Nâng 0.5.112
 
 - Upstream 0.5.111 → 0.5.112 (`1fe586bb1cf35e1ed0cb2150a8ef7d1db040b21d`): 14 commit, 48 file, áp diff (master mất tổ tiên upstream), 0 conflict, `treeDrift` sạch. Không đổi `custom-server.js`, auth, SQLite/migration, đường sinh ảnh, executor Codex hay `src/sse`; dependency không đổi (lockfile chỉ đổi version). DB tương thích rollback 0.5.111.
@@ -82,7 +90,7 @@ Lưu ý vận hành:
 1. **`docker-compose.yml` của upstream trỏ `decolua/9router:latest`.** Không dùng file này cho production WeCat. Giữ nguyên vì là file upstream.
 2. **Gate tạm của primary (W-017).** `wecat/ops/gate.mjs` đã thả hàng đợi theo nhịp, giới hạn `active` khi xả, bỏ request mất client và có timeout upstream (test offline trên Node 22/24). Chưa kiểm bằng rollout thật giờ cao điểm: vẫn ưu tiên 00:00–07:00 giờ VN; lượt sau phải chép `gate.mjs` mới vào bộ rollout.
 3. **Squash merge làm mất tổ tiên upstream.** `prepare-upstream` tự áp diff khi `master` không chứa upstream đã chấp nhận, và chặn cây lệch upstream ngoài file fork ([README](README.md#theo-dõi-upstream)). Dựng lại lần 0.5.99 → 0.5.104: 0 conflict. Sẽ dùng thật ở lần nâng kế tiếp.
-5. **Bản vá tạm upstream #5477 (W-018).** Fork áp [decolua/9router#5477](https://github.com/decolua/9router/pull/5477) (bỏ `reasoning.effort` ở đường ảnh tool `gpt-image-*`). **Secondary** chạy image `0.5.112-06c0b645f32b` từ 06/11, đã kiểm thật (`gpt-image-2.5-sunburst`, `gpt-image-2.5` đều 200). **Primary giữ `42b7ee16`, chờ upstream merge.** Khi fork nâng lên bản upstream có #5477, gỡ `codex.js` và `image-generation.test.js` khỏi `FORK_OWNED_FILES`.
+5. **Bản vá #5477 (W-018).** Upstream đã merge từ 0.5.116; khi cả hai prod lên 0.5.116 thì đóng mục này.
 4. **Script rollout không có trong repo.** `operator-rollout.py` chỉ nằm trong bộ rollout trên host (chứa đường dẫn và tên container của từng host); RUNBOOK mô tả cách dùng và các mốc log.
 
 ## Lịch sử
