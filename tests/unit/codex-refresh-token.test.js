@@ -20,6 +20,7 @@ describe("Codex Refresh Token", () => {
 
   afterEach(() => {
     global.fetch = originalFetch;
+    vi.doUnmock("undici");
   });
 
   function mockFetchWithJson(payload) {
@@ -28,6 +29,12 @@ describe("Codex Refresh Token", () => {
       json: () => Promise.resolve(payload),
     });
     global.fetch = fetchMock;
+    // WeCat: từ 0.5.116 proxyFetch luôn gọi fetch của gói undici (bỏ qua global.fetch đã gán
+    // trước khi import), nên phải mock cả undici, nếu không test gọi thật ra auth.openai.com.
+    vi.doMock("undici", async () => {
+      const actual = await vi.importActual("undici");
+      return { ...actual, fetch: fetchMock };
+    });
     return fetchMock;
   }
 

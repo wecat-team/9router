@@ -28,14 +28,13 @@ export const FORK_OWNED_FILES = [
   '.gitignore',
   'AGENTS.md',
   'CLAUDE.md',
-  'tests/unit/codex-refresh-token.test.js',
   // Lỗi Codex không trả ảnh: 502 không retry-after + x-error-code (W-018).
   'src/sse/handlers/imageGeneration.js',
   'tests/unit/wecat-image-not-returned.test.js',
-  // Tạm: áp upstream PR decolua/9router#5477 (bỏ reasoning.effort ở đường ảnh tool, W-018).
-  // Gỡ hai dòng này khi upstream đã merge #5477 và fork nâng lên bản chứa nó.
-  'open-sse/handlers/imageProviders/codex.js',
-  'tests/unit/image-generation.test.js',
+  // 0.5.116: proxyFetch luôn dùng fetch của undici; test refresh phải mock undici (giữ gate offline).
+  'tests/unit/codex-refresh-token.test.js',
+  // 0.5.116: route commandcode auto-import trả apiKey, thêm vào ALWAYS_PROTECTED/LOCAL_ONLY_PATHS.
+  'src/dashboardGuard.js',
 ];
 
 export function isForkOwned(file) {

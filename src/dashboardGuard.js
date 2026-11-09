@@ -46,6 +46,8 @@ const ALWAYS_PROTECTED = [
   "/api/oauth/cursor/auto-import",
   "/api/oauth/kiro/auto-import",
   "/api/oauth/zed/auto-import",
+  // WeCat: route này trả apiKey đọc từ ~/.commandcode/auth.json; bảo vệ như các auto-import khác.
+  "/api/oauth/commandcode/auto-import",
   "/api/oauth/minimax-code/lease",
   "/api/oauth/minimax-code-global/lease",
 ];
@@ -85,6 +87,8 @@ const LOCAL_ONLY_PATHS = [
   "/api/oauth/cursor/auto-import",
   "/api/oauth/kiro/auto-import",
   "/api/oauth/zed/auto-import",
+  // WeCat: route này trả apiKey đọc từ ~/.commandcode/auth.json; bảo vệ như các auto-import khác.
+  "/api/oauth/commandcode/auto-import",
   "/api/oauth/minimax-code/lease",
   "/api/oauth/minimax-code-global/lease",
   "/api/auth/reset-password",
