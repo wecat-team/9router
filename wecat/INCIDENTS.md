@@ -39,6 +39,13 @@ W-001…W-012 đến từ đợt nâng 0.5.91 → 0.5.95 ngày 01/10/2026; mục
   - **Sửa tận gốc (fixed trên secondary, validated 06/11):** fork áp nguyên #5477 (PR #24, `06c0b645`), rollout **chỉ secondary** 09:35 giờ VN 06/11: canary `gpt-image-2.5-sunburst` 200 (PNG 1254×1254, ~18 s), operator thử `gpt-image-2.5` 200 (~31 s). **Primary giữ `42b7ee16` chờ upstream merge** #5477. Ledger [`releases/0.5.112-06c0b645.json`](releases/0.5.112-06c0b645.json).
   - Bài học: model trong catalog chưa chắc tài khoản dùng được; model ảnh tool phụ thuộc Codex trả ảnh, có thể bị chặn bất cứ lúc nào mà gateway không đổi gì. Ưu tiên model ảnh dạng model chính có trong catalog (`gpt-6-sol-image`).
 
+## Sự cố ngày 10–12/11/2026
+
+- **W-019 (open, primary, 0.5.116): Node hết heap rồi crash giờ cao điểm.** Container primary tự restart 16 lần (exit 139): 15:23 và 15:35 giờ VN 10/11; 12 lần từ 09:58 tới 13:33 giờ VN 12/11. Log ngay trước crash: `FATAL ERROR: Ineffective mark-compacts near heap limit … JavaScript heap out of memory` ở khoảng 1,93 GB (heap mặc định, không đặt `NODE_OPTIONS`). Container trụ 30 phút tới 12 giờ tùy tải; sáng 13/11 RSS 1,86 GB khi mới vào giờ cao điểm. Mỗi lần crash, request đang chạy (chủ yếu ảnh) bị lỗi, dịch vụ gián đoạn khoảng 10–20 s.
+  - Đối chứng: 0.5.112 chạy primary 10 ngày (30/10–09/11), RestartCount=0. secondary chạy 0.5.116 cùng image, tải thấp hơn nhiều, không restart.
+  - Nghi vấn: 0.5.116 nâng `undici` 7 → 8, gọi Codex qua HTTP/2. Log có `ERR_HTTP2_STREAM_ERROR … NGHTTP2_ENHANCE_YOUR_CALM` ngay trước crash; `ETIMEDOUT` tới Codex cũng tăng (hàng trăm lần/giờ, 09–16h). Chưa có heap snapshot nên chưa xác nhận đúng chỗ giữ bộ nhớ.
+  - Hướng xử lý: upstream 0.5.119 đưa `undici` về 7.x (`94f141dd`). Nâng cả hai host lên 0.5.119; operator duyệt rollout primary ngay giờ cao điểm 13/11 vì crash lặp lại gây gián đoạn nhiều hơn rủi ro W-017. Chỉ ghi validated sau ít nhất một ngày cao điểm RestartCount=0. Cảnh báo `♻️` của `wecat/ops/alert.py` báo khi container tự restart.
+
 ## Khi phát hiện lỗi mới
 
 Mở issue theo template **WeCat build / regression**, kèm SHA/image digest, stage, lệnh tái hiện và CI artifact đã lọc. Tái hiện trước khi sửa; thêm regression test và mutation/đối chứng nếu phù hợp. Ghi `open`, `fixed`, `validated` khác nhau; chưa có chứng cứ thì không ghi “đã hết lỗi”. Không sửa allowlist known-fails để làm CI xanh.
