@@ -31,6 +31,10 @@ RUN --mount=type=cache,target=/root/.npm \
       --fetch-timeout=300000
 
 COPY . ./
+# WeCat: ghi version bản đã duyệt (validation.json) vào package.json trước khi build, vì dashboard,
+# /api/version và tên backup đọc số này. Upstream có lúc quên nâng (tag v0.5.119 vẫn ghi 0.5.116).
+ARG APP_VERSION
+RUN if [ -n "$APP_VERSION" ] && [ "$APP_VERSION" != "unknown" ]; then npm pkg set version="$APP_VERSION"; fi
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 

@@ -27,6 +27,7 @@ try{
  const image='wecat-9router:candidate-'+commit;
  if(!noBuild)check('build','docker',['build','--progress=plain','-f','wecat/Dockerfile','--build-arg','NODE_IMAGE='+config.nodeImage,'--label','org.opencontainers.image.base.name='+config.nodeImage,'--build-arg','APP_VERSION='+config.upstreamVersion,'--label','org.opencontainers.image.revision='+commit,'-t',image,'.']);
  const info=JSON.parse(run('docker',['image','inspect',image]))[0];if(info.Config.Labels['org.opencontainers.image.revision']!==commit)throw Error('Docker image khác commit');
+ const appVersion=run('docker',['run','--rm','--network','none','--entrypoint','node',info.Id,'-p',"require('/app/package.json').version"]).trim();if(appVersion!==config.upstreamVersion)throw Error('Version trong image ('+appVersion+') khác upstreamVersion '+config.upstreamVersion);
  report.image=image;report.imageId=info.Id;report.nodeImage=config.nodeImage;
  report.checks.container=await containerSmoke(info.Id);
  report.status=diagnostic?'diagnostic':'passed';report.finishedAt=new Date().toISOString();console.log('local-gate: '+report.status);
