@@ -15,7 +15,7 @@
     "unit/openai-responses-completed-usage.test.js",
     "unit/wecat-image-not-returned.test.js"
   ],
-  "upstreamVersion": "0.5.116",
+  "upstreamVersion": "0.5.119",
   "packageManifestSha256": "59a6ff2b54b6aace7e2ee5d7d422598fff205221114cf441cafc60b4bd685b5e",
   "testManifestSha256": "320deca1e8563b1f70a33bca22530c549069174c8b8f6c8cb08fcf5c0f9e3f9f",
   "toolManifestSha256": "fe04f102fe0c946686e0f717866fc9e15cc73cc2217416c7ccef3fd3f97d85d1"
