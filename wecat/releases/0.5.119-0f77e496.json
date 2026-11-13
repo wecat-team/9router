@@ -143,5 +143,29 @@
     "probe": "skipped",
     "appPullRequest": null,
     "notes": "app-handoff v0.5.112 → v0.5.119 kèm usage 14 ngày; yêu cầu chuyển mặc định chat sang gpt-6-luna (fallback gpt-6.1-terra), ảnh A/B gpt-image-2.6-flare vs gpt-6-sol-image; bỏ gpt-5.6-*-image và gpt-5.6-sol/terra."
+  },
+  "rebuild": {
+    "date": "2026-11-13",
+    "forkCommit": "9f15afeb3cb0b3c4dcad13fc8797265c9758ff0e",
+    "pullRequest": "https://github.com/wecat-team/9router/pull/30",
+    "image": {
+      "name": "wecat-9router:0.5.119-9f15afeb3cb0",
+      "id": "sha256:40fcc96ee8f5df76cfc4833cbf94cf9cc596f97fee07c7f9e9882676008e573b"
+    },
+    "reason": "Upstream tag v0.5.119 ghi 0.5.116 trong package.json; image ghi APP_VERSION trước khi build để dashboard hiện 0.5.119. Code ứng dụng không đổi.",
+    "secondary": {
+      "rolloutTimeVn": "10:40",
+      "method": "operator-rollout.py (gate hold-if-idle)",
+      "status": "passed",
+      "restartCount": 0
+    },
+    "primary": {
+      "rolloutTimeVn": "10:53",
+      "method": "fast-swap (không giữ traffic)",
+      "status": "passed",
+      "restartCount": 0,
+      "appImpact": "không thấy 502 từ 10:54"
+    },
+    "supersededImageRemoved": "wecat-9router:0.5.119-0f77e4960171"
   }
 }
