@@ -44,7 +44,15 @@ W-001…W-012 đến từ đợt nâng 0.5.91 → 0.5.95 ngày 01/10/2026; mục
 - **W-019 (open, primary, 0.5.116): Node hết heap rồi crash giờ cao điểm.** Container primary tự restart 16 lần (exit 139): 15:23 và 15:35 giờ VN 10/11; 12 lần từ 09:58 tới 13:33 giờ VN 12/11. Log ngay trước crash: `FATAL ERROR: Ineffective mark-compacts near heap limit … JavaScript heap out of memory` ở khoảng 1,93 GB (heap mặc định, không đặt `NODE_OPTIONS`). Container trụ 30 phút tới 12 giờ tùy tải; sáng 13/11 RSS 1,86 GB khi mới vào giờ cao điểm. Mỗi lần crash, request đang chạy (chủ yếu ảnh) bị lỗi, dịch vụ gián đoạn khoảng 10–20 s.
   - Đối chứng: 0.5.112 chạy primary 10 ngày (30/10–09/11), RestartCount=0. secondary chạy 0.5.116 cùng image, tải thấp hơn nhiều, không restart.
   - Nghi vấn: 0.5.116 nâng `undici` 7 → 8, gọi Codex qua HTTP/2. Log có `ERR_HTTP2_STREAM_ERROR … NGHTTP2_ENHANCE_YOUR_CALM` ngay trước crash; `ETIMEDOUT` tới Codex cũng tăng (hàng trăm lần/giờ, 09–16h). Chưa có heap snapshot nên chưa xác nhận đúng chỗ giữ bộ nhớ.
-  - Hướng xử lý: upstream 0.5.119 đưa `undici` về 7.x (`94f141dd`). Nâng cả hai host lên 0.5.119; operator duyệt rollout primary ngay giờ cao điểm 13/11 vì crash lặp lại gây gián đoạn nhiều hơn rủi ro W-017. Chỉ ghi validated sau ít nhất một ngày cao điểm RestartCount=0. Cảnh báo `♻️` của `wecat/ops/alert.py` báo khi container tự restart.
+  - Hướng xử lý (fixed, chờ validated): upstream 0.5.119 đưa `undici` về 7.x (`94f141dd`). Nâng cả hai host lên 0.5.119; operator duyệt rollout primary ngay giờ cao điểm 13/11 vì crash lặp lại gây gián đoạn nhiều hơn rủi ro W-017. Chỉ ghi validated sau ít nhất một ngày cao điểm RestartCount=0. Cảnh báo `♻️` của `wecat/ops/alert.py` báo khi container tự restart.
+  - Kết quả 13/11: primary lên 0.5.119 lúc 10:07; 6 phút đầu 100% 200, 0 lỗi `NGHTTP2`/`ETIMEDOUT` (trước đó hàng trăm lần/giờ), RSS 664 MB (trước đó 1,86 GB lúc vào giờ cao điểm).
+
+## Rollout ngày 13/11/2026
+
+- **W-017 lặp lại (primary, giờ cao điểm, operator duyệt):** lượt 09:07 bằng `operator-rollout.py`. Bước drain chờ request ảnh đang chạy mất ~6 phút; trong lúc giữ, request mới của app (upload ảnh base64 vài MB) dồn vào buffer socket, kernel báo `TCP: out of memory` lúc 09:19. Canary trong container mới không gọi được Codex → `ROLLOUT_FAILED`, tự rollback 0.5.116 (auth đạt). Sau rollback, 0.5.116 tiếp tục lỗi HTTP/2 với Codex vài phút. App gần như không có 200 khoảng 09:12–09:30 (504/499/502). Gate tạm bị giữ (`PASSTHROUGH_RETAINED_FOR_DRAIN`), gỡ tay sau khi kiểm 0 active/queued, 0 peer, nginx đã trỏ thẳng router.
+  - Kết luận: thả hàng đợi theo nhịp không đủ; chính việc **giữ** traffic giờ cao điểm làm hết bộ nhớ TCP trên host 3,9 GB. Script chuẩn chỉ dùng cho primary trong khung 04–07h giờ VN.
+  - Lượt 10:06: đổi nhanh không giữ traffic (RUNBOOK *Đổi nhanh primary*), đạt; lỗi app chỉ ở phút đổi (37 × 502).
+  - Phụ: `backup()` trực tuyến của SQLite (DB 676 MB) không xong được giờ cao điểm vì chạy lại từ đầu mỗi lần có ghi mới; `VACUUM INTO` chụp nhất quán trong ~10 s. Backup cũ nằm trong volume (6,4 GB) bị bước shadow chép theo, suýt làm đầy đĩa: đã xóa bản trước 09/11, shadow không chép thư mục backup.
 
 ## Khi phát hiện lỗi mới
 

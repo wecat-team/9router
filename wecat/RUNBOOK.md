@@ -70,6 +70,15 @@ Từ bản gate có các thay đổi dưới đây (cấu hình qua env khi ch�
 - Gate vẫn kẹt (script báo `TEMPORARY_GATE_PASSTHROUGH_RETAINED_FOR_DRAIN`): kiểm nginx đã trỏ về router và `ss -tn state established "( dport = :<cổng gate> )"` không còn peer, rồi mới `docker stop`/`docker rm` gate tạm.
 - Mức nền khi đánh giá: primary có `ETIMEDOUT` rải rác (khoảng 10–15 lần mỗi giờ) ngay cả khi không rollout. Chỉ coi là sự cố khi vượt mức này hoặc có `all … accounts locked`.
 
+### Đổi nhanh primary (giờ cao điểm, chỉ khi operator duyệt)
+
+Dùng khi phải nâng primary ngoài khung 04–07h giờ VN (vd. bản đang chạy crash lặp lại, W-019). Không giữ traffic, nên không gặp W-017; đổi lại request đang chạy lúc đổi container (~30 s) sẽ lỗi, giống một lần restart.
+
+- Script `fast-swap.py` nằm trong bộ rollout trên host (cùng lý do với `operator-rollout.py`: chứa đường dẫn/tên container), dùng lại `operator-db.cjs`, `live-canary.mjs`, `fixtures.mjs`.
+- Các bước: kiểm label/ID image → backup compose/env → backup SQLite bằng `VACUUM INTO` (nhất quán, ~10 s với DB 676 MB; `backup()` trực tuyến không xong được khi DB ghi liên tục) → shadow trên bản sao dữ liệu (không chép `db/backups`) kiểm key/provider/cấu hình → backup boundary → `docker compose up -d` image mới → auth → canary thật → monitor 180 s. Lỗi sau khi đổi thì tự đổi về image cũ trên cùng volume.
+- Trước khi chạy: dừng watcher đêm nếu có; kiểm đĩa đủ cho 2 bản DB (`df -h /`).
+- Không dùng `pgrep -f`/`pkill -f` qua SSH với chuỗi trùng tên script: lệnh khớp cả shell SSH của chính mình.
+
 ## Canary thật
 
 Đây là một thao tác dùng quota: mặc định không chạy trong gate. Operator được phép truyền `WECAT_CANARY_BASE_URL` (base `/v1`), `WECAT_CANARY_API_KEY`, `WECAT_CANARY_TARGET=primary|secondary` qua cơ chế secret an toàn, rồi gọi:

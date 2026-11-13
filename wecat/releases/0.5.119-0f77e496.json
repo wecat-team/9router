@@ -1,0 +1,147 @@
+{
+  "schema": 1,
+  "version": "0.5.119",
+  "upstreamCommit": "1855aa44473e88feac9d3f131b9c0c5fc9706b68",
+  "forkCommit": "0f77e496017180d214c648a9a758731bcc0af0e9",
+  "date": "2026-11-13",
+  "status": "production-verified",
+  "pullRequest": "https://github.com/wecat-team/9router/pull/28",
+  "validation": {
+    "pullRequestCheck": "WeCat release gate passed",
+    "operatorReceipt": "passed",
+    "containerSmoke": "passed (Chrome hệ thống qua WECAT_CHROME_EXECUTABLE)",
+    "offlineRealProviderCalls": 0,
+    "upstreamApply": "diff (master mất tổ tiên upstream), 0 conflict, treeDrift sạch, không file fork-owned bị upstream sửa"
+  },
+  "image": {
+    "name": "wecat-9router:0.5.119-0f77e4960171",
+    "id": "sha256:363aed4ca3b23372a4920068085a2d920982cf0c0bcc937776432ffed11fda05",
+    "platform": "linux/amd64",
+    "builtBy": "operator-local-gate",
+    "delivery": "docker save | ssh docker load",
+    "verifiedOnBothHosts": true
+  },
+  "targets": {
+    "secondary": {
+      "status": "production-verified",
+      "runningVersion": "0.5.119",
+      "rolloutDate": "2026-11-13",
+      "rolloutTimeVn": "08:53",
+      "method": "operator-rollout.py (gate hold-if-idle)",
+      "shadowAuthAndPreservation": "passed",
+      "apiKeyCount": {
+        "before": 2,
+        "after": 2
+      },
+      "providerConnectionCount": {
+        "before": 5,
+        "after": 5
+      },
+      "keysPreserved": true,
+      "configPreserved": true,
+      "sqliteIntegrity": "ok",
+      "monitorSeconds": 180,
+      "restartCount": 0,
+      "canary": {
+        "status": "passed",
+        "checkedAt": "2026-11-13T01:55:16.908Z",
+        "chat": {
+          "http": 200,
+          "elapsedMs": 2405
+        },
+        "imageWithTwoReferences": {
+          "model": "gpt-5.6-luna-image",
+          "http": 200,
+          "elapsedMs": 19638,
+          "bytes": 949101,
+          "width": 1254
+        },
+        "toolImageWithTwoReferences": {
+          "model": "gpt-image-2.5-sunburst",
+          "http": 200,
+          "elapsedMs": 15135,
+          "bytes": 971688,
+          "width": 1254
+        },
+        "realProviderCalls": 3
+      },
+      "rollback": "image 0.5.116 + env cũ + SQLite backup trong bộ rollout"
+    },
+    "primary": {
+      "status": "production-verified",
+      "runningVersion": "0.5.119",
+      "rolloutDate": "2026-11-13",
+      "rolloutTimeVn": "10:07",
+      "approvedBy": "operator, giờ cao điểm (W-019)",
+      "attempts": [
+        {
+          "timeVn": "09:07",
+          "method": "operator-rollout.py (gate tạm giữ traffic)",
+          "result": "failed, tự rollback 0.5.116",
+          "cause": "giữ hàng đợi ~6 phút giờ cao điểm → kernel TCP out of memory 09:19, canary không gọi được Codex (W-017 lặp lại)",
+          "appImpact": "~09:12–09:30 gần như không có 200"
+        },
+        {
+          "timeVn": "10:06",
+          "method": "fast-swap (không giữ traffic; VACUUM INTO backup, shadow, canary, monitor, tự rollback)",
+          "result": "passed",
+          "appImpact": "37 lỗi 502 trong phút 10:06 khi đổi container (~34 s)"
+        }
+      ],
+      "shadowAuthAndPreservation": "passed",
+      "apiKeyCount": {
+        "before": 3,
+        "after": 3
+      },
+      "providerConnectionCount": {
+        "before": 6,
+        "after": 6
+      },
+      "keysPreserved": true,
+      "configPreserved": true,
+      "monitorSeconds": 180,
+      "restartCount": 0,
+      "canary": {
+        "status": "passed",
+        "checkedAt": "2026-11-13T03:07:35.436Z",
+        "chat": {
+          "http": 200,
+          "elapsedMs": 2281
+        },
+        "imageWithTwoReferences": {
+          "model": "gpt-5.6-luna-image",
+          "http": 200,
+          "elapsedMs": 16036,
+          "bytes": 970634,
+          "width": 1254
+        },
+        "toolImageWithTwoReferences": {
+          "model": "gpt-image-2",
+          "http": 200,
+          "elapsedMs": 18729,
+          "bytes": 968653,
+          "width": 1254
+        },
+        "realProviderCalls": 3
+      },
+      "postSwap": "6 phút đầu: 100% 200, 0 lỗi NGHTTP2/ETIMEDOUT; RSS 664 MB",
+      "rollback": "image 0.5.116 + compose cũ + SQLite backup (VACUUM INTO)"
+    }
+  },
+  "rollback": {
+    "image": "wecat-9router:0.5.116-07fd4760ffb7",
+    "imageId": "sha256:bf150463831e5b48795574ad238bb4514e630463766eb374090b83fb6a52709c",
+    "oldImageRetainedOnBothHosts": true,
+    "schemaChanged": false,
+    "databaseSnapshotRestored": false
+  },
+  "notes": "undici 8 → 7 (W-019 heap OOM trên primary 0.5.116); Codex CLI 0.167.1; ảnh tool có tham chiếu đi images/edits native. Công cụ fork lấy version từ tag vì package.json gốc vẫn 0.5.116.",
+  "appHandoff": {
+    "status": "sent",
+    "date": "2026-11-13",
+    "removedModelsInUse": [],
+    "probe": "skipped",
+    "appPullRequest": null,
+    "notes": "app-handoff v0.5.112 → v0.5.119 kèm usage 14 ngày; yêu cầu chuyển mặc định chat sang gpt-6-luna (fallback gpt-6.1-terra), ảnh A/B gpt-image-2.6-flare vs gpt-6-sol-image; bỏ gpt-5.6-*-image và gpt-5.6-sol/terra."
+  }
+}
