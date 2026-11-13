@@ -1,0 +1,146 @@
+{
+  "schema": 1,
+  "version": "0.5.116",
+  "upstreamCommit": "1339107e624d1ab150c6a0c2c2ee22caa7e9db2f",
+  "forkCommit": "07fd4760ffb7858757ed2971eb6ab995ab4f38b0",
+  "date": "2026-11-10",
+  "status": "superseded",
+  "pullRequest": "https://github.com/wecat-team/9router/pull/26",
+  "validation": {
+    "pullRequestCheck": "WeCat release gate passed",
+    "operatorReceipt": "passed",
+    "criticalTests": 99,
+    "containerSmoke": "passed",
+    "offlineRealProviderCalls": 0,
+    "upstreamApply": "diff (master mất tổ tiên upstream); conflict ở 2 file vá tạm #5477, lấy bản upstream; treeDrift sạch"
+  },
+  "image": {
+    "name": "wecat-9router:0.5.116-07fd4760ffb7",
+    "id": "sha256:bf150463831e5b48795574ad238bb4514e630463766eb374090b83fb6a52709c",
+    "platform": "linux/amd64",
+    "builtBy": "operator-local-gate",
+    "delivery": "docker save | ssh docker load",
+    "verifiedOnBothHosts": true
+  },
+  "targets": {
+    "secondary": {
+      "status": "production-verified",
+      "runningVersion": "0.5.116",
+      "rolloutDate": "2026-11-09",
+      "rolloutTimeVn": "11:08",
+      "shadowAuthAndPreservation": "passed",
+      "apiKeyCount": {
+        "before": 2,
+        "after": 2
+      },
+      "providerConnectionCount": {
+        "before": 5,
+        "after": 5
+      },
+      "keysPreserved": true,
+      "configPreserved": true,
+      "sqliteIntegrity": "ok",
+      "monitorSeconds": 180,
+      "restartCount": 0,
+      "gate": {
+        "protocol": "hold-if-idle",
+        "held": false,
+        "queued": 0
+      },
+      "publicChecks": {
+        "login": 200,
+        "modelsWithoutKey": 401
+      },
+      "canary": {
+        "status": "passed",
+        "checkedAt": "2026-11-09T04:10:36.501Z",
+        "chat": {
+          "http": 200,
+          "elapsedMs": 1771
+        },
+        "imageWithTwoReferences": {
+          "model": "gpt-5.6-luna-image",
+          "http": 200,
+          "elapsedMs": 74021,
+          "bytes": 968535,
+          "width": 1254
+        },
+        "toolImageWithTwoReferences": {
+          "model": "gpt-image-2.5-sunburst",
+          "host": "gpt-6-sol",
+          "http": 200,
+          "elapsedMs": 20990,
+          "bytes": 994749,
+          "width": 1254
+        },
+        "realProviderCalls": 3
+      },
+      "rollback": "image 0.5.112 (06c0b645) + env cũ + SQLite backup trong bộ rollout"
+    },
+    "primary": {
+      "status": "production-verified",
+      "runningVersion": "0.5.116",
+      "rolloutDate": "2026-11-10",
+      "rolloutTimeVn": "03:16",
+      "launchedBy": "watcher (00:00–07:00 giờ VN, <50 request/30 phút)",
+      "trafficBeforeRollout": {
+        "windowMinutes": 30,
+        "requests": 7
+      },
+      "shadowAuthAndPreservation": "passed",
+      "apiKeyCount": {
+        "before": 3,
+        "after": 3
+      },
+      "providerConnectionCount": {
+        "before": 6,
+        "after": 6
+      },
+      "keysPreserved": true,
+      "configPreserved": true,
+      "sqliteIntegrity": "ok",
+      "monitorSeconds": 180,
+      "restartCount": 0,
+      "temporaryGateDrainedAndRemoved": true,
+      "canary": {
+        "status": "passed",
+        "checkedAt": "2026-11-09T20:23:26.089Z",
+        "chat": {
+          "http": 200,
+          "elapsedMs": 3199
+        },
+        "imageWithTwoReferences": {
+          "model": "gpt-5.6-luna-image",
+          "http": 200,
+          "elapsedMs": 14510,
+          "bytes": 998540,
+          "width": 1254
+        },
+        "toolImageWithTwoReferences": {
+          "model": "gpt-image-2",
+          "host": "gpt-6-sol",
+          "http": 200,
+          "elapsedMs": 16849,
+          "bytes": 984829,
+          "width": 1254
+        },
+        "realProviderCalls": 3
+      },
+      "postRollout": "W-019: 16 lần crash heap OOM giờ cao điểm 10/11 và 12/11 (RestartCount=16)",
+      "rollback": "image 0.5.112 (42b7ee16) + compose cũ + SQLite backup"
+    }
+  },
+  "rollback": {
+    "image": "wecat-9router:0.5.112-42b7ee168bb8",
+    "imageId": "sha256:5bbb5c158d8a9854f5b179239bf161eb50a63f23c46f13123b8f267dec6646f4",
+    "oldImageRetainedOnBothHosts": true,
+    "schemaChanged": false,
+    "databaseSnapshotRestored": false
+  },
+  "notes": "Đường ảnh tool sửa upstream (#5477) + endpoint native cho tool không ảnh tham chiếu. undici 8 (HTTP/2) nghi là nguyên nhân heap OOM trên primary (W-019); thay bằng 0.5.119.",
+  "appHandoff": {
+    "status": "skipped",
+    "date": "2026-11-13",
+    "notes": "Thay bằng 0.5.119 trước khi bàn giao; bàn giao gộp ở lượt 0.5.119 (thêm gpt-image-2.6-*)."
+  }
+}

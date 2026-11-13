@@ -131,7 +131,9 @@ export function upstreamState(ref) {
   const toCommit = run('git', ['rev-parse', (target === 'master' ? 'upstream/master' : target) + '^{commit}']);
   const config = readValidation();
   const fromCommit = config.acceptedUpstreamCommit;
-  const toVersion = JSON.parse(run('git', ['show', toCommit + ':package.json'])).version;
+  // Tag vX.Y.Z là version phát hành; upstream có lúc chỉ nâng cli/package.json (0.5.119 giữ 0.5.116 ở gốc).
+  const tagVersion = /^v(\d+\.\d+\.\d+)$/.exec(target)?.[1];
+  const toVersion = tagVersion || JSON.parse(run('git', ['show', toCommit + ':package.json'])).version;
   const upToDate = run('git', ['rev-list', '--count', `${fromCommit}..${toCommit}`]) === '0';
   const changed = upToDate ? [] : run('git', ['diff', '--name-only', fromCommit, toCommit]).split('\n').filter(Boolean);
   return {

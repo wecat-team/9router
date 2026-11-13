@@ -9,6 +9,15 @@ Cập nhật: **2026-10-30** (cả hai production chạy 0.5.112). Đây là nơ
 - Bản trước: **0.5.111** (`3a978a631ad65529c06e48ce495092d5bba29f46`, [PR #17](https://github.com/wecat-team/9router/pull/17)).
 - PR #10 squash merge nên `master` không chứa tổ tiên upstream; `prepare-upstream` gặp 19 conflict (merge-base v0.5.95). Fork không sửa file nào trong số đó nên lấy nguyên bản upstream. PR nâng upstream sau nên giữ merge commit để tránh lặp lại.
 
+### Nâng 0.5.119
+
+- Upstream 0.5.116 → 0.5.119 (`1855aa44473e88feac9d3f131b9c0c5fc9706b68`): 39 commit, 116 file, áp diff, 0 conflict, `treeDrift` sạch; không file fork-owned nào bị upstream sửa. Upstream chỉ nâng `cli/package.json`; `package.json` gốc vẫn ghi 0.5.116, nên công cụ fork lấy version từ tag và gắn `APP_VERSION` theo `upstreamVersion` trong `validation.json`.
+- **Lý do nâng gấp (W-019):** primary 0.5.116 crash 16 lần vì hết heap giờ cao điểm. 0.5.119 đưa `undici` 8.12.4 → **7.30.2** (bỏ HTTP/2 mặc định của 8.x), và ngừng quảng bá `zstd` khi runtime không giải được.
+- **Codex:** định danh Codex CLI 0.159.0 → **0.167.1** (Codex trả 400 cho `gpt-6.1-sol` với bản cũ từ 10/11). Catalog Codex không đổi.
+- **Ảnh Codex:** model tool `gpt-image-*` có ảnh tham chiếu (n=1, size auto, png) chuyển sang endpoint native `images/edits`; trước đó đi Responses và bị `Complexity 'medium'` ở một số tài khoản (W-018). Tài khoản từ chối `gpt-6-sol` làm model điều phối thì thử lại một lần với `gpt-5.6-terra`. Đường model chính `*-image` mà app.wecat.vn dùng không đổi; contract và mutation-check vẫn đạt.
+- Khác: passthrough stream chỉ gửi một `[DONE]`; `/v1/models` thêm `thinking_levels` (trường mới, app không đọc); `imageGenerationCore` có bước thử lại do adapter quyết định. Phần còn lại thuộc provider WeCat không dùng (Claude Fable 5.2/Haiku 5.5, Gemini 4 Carbon, synthetic.new, SenseNova quốc tế, OpenCode, Qoder, NVIDIA NIM, MiniMax…).
+- Bảo mật: không có route API mới; các route đổi (`providers/validate`, `providers/[id]/models`, `cli-tools/opencode-settings`, `usage/[connectionId]`) nằm sau chặn `/api/*` cần đăng nhập. `proxyFetch` chỉ thêm cập nhật nền phiên bản Claude CLI (gọi npm registry) khi request mang header Claude CLI; Codex không dùng. Log proxy chỉ ghi host, không ghi credential/URL đầy đủ. Không đổi `custom-server.js`, auth, SQLite/migration, `imageGeneration.js`, `dashboardGuard.js`.
+
 ### Nâng 0.5.116
 
 - Upstream 0.5.112 → 0.5.116 (`1339107e624d1ab150c6a0c2c2ee22caa7e9db2f`): 29 commit, 95 file, áp diff, `treeDrift` sạch. Conflict chỉ ở hai file fork-owned tạm của bản vá #5477: upstream đã merge #5477 (điều chỉnh cho endpoint ảnh native) nên lấy nguyên bản upstream và gỡ khỏi `FORK_OWNED_FILES`.
