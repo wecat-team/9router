@@ -139,8 +139,8 @@
   },
   "notes": "Đường ảnh tool sửa upstream (#5477) + endpoint native cho tool không ảnh tham chiếu. undici 8 (HTTP/2) nghi là nguyên nhân heap OOM trên primary (W-019); thay bằng 0.5.119.",
   "appHandoff": {
-    "status": "skipped",
+    "status": "sent",
     "date": "2026-11-13",
-    "notes": "Thay bằng 0.5.119 trước khi bàn giao; bàn giao gộp ở lượt 0.5.119 (thêm gpt-image-2.6-*)."
+    "notes": "Gộp vào bàn giao 0.5.119 (catalog không đổi giữa 0.5.116 và 0.5.119)."
   }
 }

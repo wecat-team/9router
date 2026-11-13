@@ -1,12 +1,12 @@
 # Tình trạng 9Router WeCat
 
-Cập nhật: **2026-10-30** (cả hai production chạy 0.5.112). Đây là nơi duy nhất ghi "đang ở đâu". Cập nhật file này trong cùng PR khi nâng upstream, và sau mỗi lần rollout production. Chỉ dùng tên vai trò primary/secondary; hostname, IP và credential không vào repo.
+Cập nhật: **2026-11-13** (cả hai production chạy 0.5.119). Đây là nơi duy nhất ghi "đang ở đâu". Cập nhật file này trong cùng PR khi nâng upstream, và sau mỗi lần rollout production. Chỉ dùng tên vai trò primary/secondary; hostname, IP và credential không vào repo.
 
 ## Upstream
 
 - Nguồn: [`decolua/9router`](https://github.com/decolua/9router), phát hành bằng tag `vX.Y.Z` trên `master`.
-- Bản đang chạy production: **0.5.112**, commit `1fe586bb1cf35e1ed0cb2150a8ef7d1db040b21d` (fork `42b7ee16` trên `master`, [PR #20](https://github.com/wecat-team/9router/pull/20)); 0.5.111 giữ làm image rollback.
-- Bản trước: **0.5.111** (`3a978a631ad65529c06e48ce495092d5bba29f46`, [PR #17](https://github.com/wecat-team/9router/pull/17)).
+- Bản đang chạy production: **0.5.119**, commit `1855aa44473e88feac9d3f131b9c0c5fc9706b68` (fork `0f77e496` trên `master`, [PR #28](https://github.com/wecat-team/9router/pull/28)); 0.5.116 giữ làm image rollback.
+- Bản trước: **0.5.116** (`1339107e624d1ab150c6a0c2c2ee22caa7e9db2f`, [PR #26](https://github.com/wecat-team/9router/pull/26)), chạy 09–13/11; primary crash heap OOM (W-019).
 - PR #10 squash merge nên `master` không chứa tổ tiên upstream; `prepare-upstream` gặp 19 conflict (merge-base v0.5.95). Fork không sửa file nào trong số đó nên lấy nguyên bản upstream. PR nâng upstream sau nên giữ merge commit để tránh lặp lại.
 
 ### Nâng 0.5.119
@@ -79,14 +79,16 @@ Cập nhật: **2026-10-30** (cả hai production chạy 0.5.112). Đây là nơ
 
 ## Production
 
-Image 0.5.112 do gate operator build (amd64) trên `master` `42b7ee16`: `wecat-9router:0.5.112-42b7ee168bb8`, ID `sha256:5bbb5c158d8a9854f5b179239bf161eb50a63f23c46f13123b8f267dec6646f4`. Đã nạp sang cả hai host qua SSH và so ID với receipt. Image 0.5.111 (`wecat-9router:0.5.111-605a6b0e2322`) giữ làm rollback trên cả hai host.
+Image 0.5.119 do gate operator build (amd64) trên `master` `0f77e496`: `wecat-9router:0.5.119-0f77e4960171`, ID `sha256:363aed4ca3b23372a4920068085a2d920982cf0c0bcc937776432ffed11fda05`. Đã nạp sang cả hai host qua SSH và so ID với receipt. Image 0.5.116 (`wecat-9router:0.5.116-07fd4760ffb7`) giữ làm rollback; primary giữ thêm 0.5.112.
 
-| Vai trò | Phiên bản đang chạy | Kết quả 29–30/10/2026 | Dữ liệu/cấu hình | Rollback giữ trên host |
+| Vai trò | Phiên bản đang chạy | Kết quả 13/11/2026 | Dữ liệu/cấu hình | Rollback giữ trên host |
 |---|---|---|---|---|
-| primary | 0.5.112 (00:00 giờ VN 30/10) | Watcher khởi động lúc 00:00:12 (30 phút trước có 0 request); shadow đạt; chat 200 (~3.2 s), `gpt-5.6-luna-image` 2 ref 200 (~21 s, passthrough), `gpt-image-2` qua `gpt-6-sol` 200 (~19 s); monitor 180 s đạt, RestartCount=0; gate tạm drain và tự gỡ, nginx trỏ thẳng router | API key 3→3, provider 6→6; settings/proxy/key giữ nguyên, SQLite ok | image 0.5.111 + compose cũ + SQLite backup API + full volume khi writer dừng |
-| secondary | 0.5.112 (09:07 giờ VN 29/10) | 30 phút trước có 21 request; shadow đạt; gate `hold-if-idle`; chat 200 (~2.6 s), `gpt-5.6-luna-image` 2 ref 200 (~18 s, passthrough), `gpt-image-2.5-sunburst` qua `gpt-6-sol` 200 (~20 s); monitor 180 s đạt, RestartCount=0; HTTPS login 200, `/v1/models` không key 401 | API key 2→2, provider 6→6; settings/proxy/key giữ nguyên, SQLite ok; ACL mới vẫn không bật | image 0.5.111 + env cũ + SQLite backup API + full volume khi writer dừng, ngoài cây deploy ứng dụng |
+| primary | 0.5.119 (10:07 giờ VN 13/11) | Lượt 09:07 bằng script chuẩn (gate tạm giữ traffic) **không đạt**: giữ hàng đợi ~6 phút giờ cao điểm làm kernel hết bộ nhớ TCP (W-017 lặp lại), canary không gọi được Codex, tự rollback 0.5.116; app gần như không có 200 khoảng 09:12–09:30. Lượt 10:06 **đổi nhanh không giữ traffic** (operator duyệt): backup `VACUUM INTO`, shadow đạt, đổi container ~34 s (37 lỗi 502), chat 200 (~2.3 s), `gpt-5.6-luna-image` 2 ref 200 (~16 s), `gpt-image-2` 200 (~19 s); monitor 180 s đạt, RestartCount=0; 6 phút đầu 100% 200, 0 lỗi HTTP/2/`ETIMEDOUT` | API key 3→3, provider 6→6; settings/proxy/key giữ nguyên | image 0.5.116 + compose cũ + SQLite backup `VACUUM INTO` |
+| secondary | 0.5.119 (08:53 giờ VN 13/11) | Gate `hold-if-idle`; shadow đạt; chat 200 (~2.4 s), `gpt-5.6-luna-image` 2 ref 200 (~20 s), `gpt-image-2.5-sunburst` 200 (~15 s); monitor 180 s đạt, RestartCount=0 | API key 2→2, provider 5→5; SQLite ok | image 0.5.116 + env cũ + SQLite backup trong bộ rollout |
 
-Ledger hiện tại: [`releases/0.5.112-42b7ee16.json`](releases/0.5.112-42b7ee16.json) (cả hai production đã nâng và kiểm chứng; bàn giao app: not-needed). Lịch sử: [`releases/0.5.111-605a6b0e.json`](releases/0.5.111-605a6b0e.json), [`releases/0.5.109-1a2a1bd4.json`](releases/0.5.109-1a2a1bd4.json), [`releases/0.5.104-fd6da50f.json`](releases/0.5.104-fd6da50f.json), [`releases/0.5.99-1bb26a28.json`](releases/0.5.99-1bb26a28.json), [`releases/0.5.95-556b4a96.json`](releases/0.5.95-556b4a96.json), [`releases/0.5.95.json`](releases/0.5.95.json).
+Ledger hiện tại: [`releases/0.5.119-0f77e496.json`](releases/0.5.119-0f77e496.json) (cả hai production đã nâng và kiểm chứng; bàn giao app: đã gửi). Lịch sử: [`releases/0.5.116-07fd4760.json`](releases/0.5.116-07fd4760.json), [`releases/0.5.112-06c0b645.json`](releases/0.5.112-06c0b645.json), [`releases/0.5.112-42b7ee16.json`](releases/0.5.112-42b7ee16.json), [`releases/0.5.111-605a6b0e.json`](releases/0.5.111-605a6b0e.json), [`releases/0.5.109-1a2a1bd4.json`](releases/0.5.109-1a2a1bd4.json), [`releases/0.5.104-fd6da50f.json`](releases/0.5.104-fd6da50f.json), [`releases/0.5.99-1bb26a28.json`](releases/0.5.99-1bb26a28.json), [`releases/0.5.95-556b4a96.json`](releases/0.5.95-556b4a96.json), [`releases/0.5.95.json`](releases/0.5.95.json).
+
+- app.wecat.vn chỉ gọi primary; secondary phục vụ các key khác. Cảnh báo lỗi API qua Telegram (`wecat/ops/alert.py`) chạy cron trên cả hai host.
 
 Lưu ý vận hành:
 
@@ -97,9 +99,10 @@ Lưu ý vận hành:
 ## Còn mở
 
 1. **`docker-compose.yml` của upstream trỏ `decolua/9router:latest`.** Không dùng file này cho production WeCat. Giữ nguyên vì là file upstream.
-2. **Gate tạm của primary (W-017).** `wecat/ops/gate.mjs` đã thả hàng đợi theo nhịp, giới hạn `active` khi xả, bỏ request mất client và có timeout upstream (test offline trên Node 22/24). Chưa kiểm bằng rollout thật giờ cao điểm: vẫn ưu tiên 00:00–07:00 giờ VN; lượt sau phải chép `gate.mjs` mới vào bộ rollout.
+2. **Rollout primary giờ cao điểm (W-017).** Đã kiểm thật 13/11: dù gate thả hàng đợi theo nhịp, **việc giữ traffic** vài phút giờ cao điểm vẫn làm hết bộ nhớ TCP (upload ảnh base64 nằm trong buffer). Primary chỉ dùng script chuẩn trong khung 04–07h giờ VN (ngoài khung này 2–4 nghìn request/giờ). Cần nâng gấp giờ cao điểm thì dùng đổi nhanh không giữ traffic (RUNBOOK), chấp nhận ~30 s lỗi.
 3. **Squash merge làm mất tổ tiên upstream.** `prepare-upstream` tự áp diff khi `master` không chứa upstream đã chấp nhận, và chặn cây lệch upstream ngoài file fork ([README](README.md#theo-dõi-upstream)). Dựng lại lần 0.5.99 → 0.5.104: 0 conflict. Sẽ dùng thật ở lần nâng kế tiếp.
-5. **Bản vá #5477 (W-018).** Upstream đã merge từ 0.5.116; khi cả hai prod lên 0.5.116 thì đóng mục này.
+5. **W-018 đã đóng phía gateway.** Từ 0.5.119 ảnh tool có/không ảnh tham chiếu đều đi endpoint native khi n=1, size auto, PNG; app vẫn chưa bật lại nhóm `gpt-image-*` (chờ A/B trong bàn giao 0.5.119).
+6. **W-019 (heap OOM primary 0.5.116).** Chờ một ngày cao điểm trên 0.5.119 với RestartCount=0 rồi ghi validated.
 4. **Script rollout không có trong repo.** `operator-rollout.py` chỉ nằm trong bộ rollout trên host (chứa đường dẫn và tên container của từng host); RUNBOOK mô tả cách dùng và các mốc log.
 
 ## Lịch sử
@@ -123,3 +126,6 @@ Lưu ý vận hành:
 | 2026-10-29 | Nâng upstream 0.5.112 ([PR #20](https://github.com/wecat-team/9router/pull/20)): Codex chỉ thêm `gpt-6.1-terra`. secondary → 0.5.112 lúc 09:07 giờ VN đạt canary/monitor |
 | 2026-10-30 | primary → 0.5.112 lúc 00:00 giờ VN (watcher, 0 request/30 phút) đạt canary/monitor. Cả hai production chạy 0.5.112; bàn giao app not-needed |
 | 2026-11-06 | secondary → image fork `0.5.112-06c0b645f32b` (áp upstream #5477, W-018) lúc 09:35 giờ VN, canary ảnh tool `gpt-image-2.5-sunburst` 200. primary giữ `42b7ee16` chờ upstream merge |
+| 2026-11-09 | Nâng upstream 0.5.116 ([PR #26](https://github.com/wecat-team/9router/pull/26)). secondary → 0.5.116 lúc 11:08 giờ VN đạt canary/monitor. Cảnh báo lỗi API qua Telegram ([PR #27](https://github.com/wecat-team/9router/pull/27)) |
+| 2026-11-10 | primary → 0.5.116 lúc 03:16 giờ VN (watcher, 7 request/30 phút) đạt canary/monitor. Chiều 10/11 và 12/11 primary crash heap OOM 16 lần (W-019) |
+| 2026-11-13 | Nâng upstream 0.5.119 ([PR #28](https://github.com/wecat-team/9router/pull/28), undici về 7.x). secondary → 0.5.119 lúc 08:53 đạt. primary: lượt 09:07 hết bộ nhớ TCP khi giữ traffic, tự rollback (gián đoạn ~09:12–09:30); lượt đổi nhanh 10:06 đạt. Bàn giao app 0.5.119 đã gửi (chuyển mặc định sang model rẻ nhất) |

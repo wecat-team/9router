@@ -1,8 +1,8 @@
-# Model Codex qua 9Router (0.5.116)
+# Model Codex qua 9Router (0.5.119)
 
 Tài liệu đối chiếu cho app gọi gateway (app.wecat.vn và các app khác). Cập nhật file này mỗi khi nâng upstream có đổi catalog Codex.
 
-- Nguồn catalog: `open-sse/providers/registry/codex.js` tại upstream `v0.5.116` (`1339107e`). App gọi với prefix `cx/`, ví dụ `cx/gpt-5.6-terra`.
+- Nguồn catalog: `open-sse/providers/registry/codex.js` tại upstream `v0.5.119` (`1855aa44`; catalog không đổi so với 0.5.116). App gọi với prefix `cx/`, ví dụ `cx/gpt-5.6-terra`.
 - Giá: USD/1 triệu token vào/ra, lấy từ `open-sse/providers/pricing.js`. Đây là ước tính 9Router dùng cho trang Usage, **không phải hóa đơn**: Codex dùng quota tài khoản ChatGPT.
 - Bằng chứng production: số request thành công trong 14 ngày đến 16/10/2026, gộp theo model, không có dữ liệu khách hàng.
 - Model có trong catalog chưa chắc tài khoản dùng được. Trước khi bật model mới trong app, thử ít nhất một lượt thật với đúng payload của app.
@@ -39,7 +39,7 @@ Biến thể không dùng cho app: hậu tố `[1m]` (context mở rộng, cùng
 | `gpt-image-2.6-sunburst` | tool | **chưa** | chưa có | **mới từ 0.5.116**; chưa thử với tài khoản WeCat |
 
 - **Model chính vẽ** (`<model>-image`): 9Router bỏ hậu tố `-image` rồi gọi model đó kèm tool sinh ảnh. Chi phí theo model chính.
-- **Tool** (`gpt-image-*`): **upstream đã sửa từ 0.5.116** (merge nội dung #5477: bỏ `reasoning.effort`, hiện đúng lỗi `response.failed`). 0.5.116 còn chuyển request tool **không ảnh tham chiếu, size `auto`, n=1, png** sang endpoint native `backend-api/codex/images/generations`; có ảnh tham chiếu thì vẫn đi Responses. Trước 0.5.116: **cả nhóm hỏng từ 05/11/2026 (W-018)** — Codex trả 502 "did not return an image" ở mọi tài khoản, trên cả hai production; đây là thay đổi phía Codex, 9Router không đổi gì. app.wecat.vn đã map sang `gpt-6-sol-image` ([#482](https://github.com/wecat-team/wecat-product-intelligence/pull/482)). Mô tả bên dưới là hành vi khi nhóm này chạy lại. Model điều phối là `gpt-6-sol` từ 0.5.111 (0.5.109: `gpt-5.6-terra`, 0.5.104: `gpt-5.6-sol`, trước đó `gpt-5.5`), model vẽ là chính model tool. Nếu tài khoản nào không được dùng model điều phối thì mọi tool ảnh trên tài khoản đó lỗi; canary `gpt-image-*` bắt trường hợp này.
+- **Tool** (`gpt-image-*`): **upstream đã sửa từ 0.5.116** (merge nội dung #5477: bỏ `reasoning.effort`, hiện đúng lỗi `response.failed`). 0.5.116 còn chuyển request tool **không ảnh tham chiếu, size `auto`, n=1, png** sang endpoint native `backend-api/codex/images/generations`; từ **0.5.119** request tool **có ảnh tham chiếu** (cùng điều kiện) đi endpoint native `images/edits`, hết lỗi `Complexity 'medium'`; tài khoản từ chối `gpt-6-sol` làm model điều phối thì thử lại một lần với `gpt-5.6-terra`. Trước 0.5.116: **cả nhóm hỏng từ 05/11/2026 (W-018)** — Codex trả 502 "did not return an image" ở mọi tài khoản, trên cả hai production; đây là thay đổi phía Codex, 9Router không đổi gì. app.wecat.vn đã map sang `gpt-6-sol-image` ([#482](https://github.com/wecat-team/wecat-product-intelligence/pull/482)). Mô tả bên dưới là hành vi khi nhóm này chạy lại. Model điều phối là `gpt-6-sol` từ 0.5.111 (0.5.109: `gpt-5.6-terra`, 0.5.104: `gpt-5.6-sol`, trước đó `gpt-5.5`), model vẽ là chính model tool. Nếu tài khoản nào không được dùng model điều phối thì mọi tool ảnh trên tài khoản đó lỗi; canary `gpt-image-*` bắt trường hợp này.
 - Ảnh tham chiếu: `image` là chuỗi khi có một ảnh, `images` là mảng khi có nhiều ảnh; `response_format=binary` đặt trên query.
 
 ## Đã gỡ hoặc không có trong catalog
