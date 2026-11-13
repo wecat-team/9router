@@ -79,7 +79,7 @@ Cập nhật: **2026-11-13** (cả hai production chạy 0.5.119). Đây là nơ
 
 ## Production
 
-Image 0.5.119 do gate operator build (amd64) trên `master` `0f77e496`: `wecat-9router:0.5.119-0f77e4960171`, ID `sha256:363aed4ca3b23372a4920068085a2d920982cf0c0bcc937776432ffed11fda05`. Đã nạp sang cả hai host qua SSH và so ID với receipt. Image 0.5.116 (`wecat-9router:0.5.116-07fd4760ffb7`) giữ làm rollback; primary giữ thêm 0.5.112.
+Image 0.5.119 đang chạy do gate operator build (amd64) trên `master` `9f15afeb` ([PR #30](https://github.com/wecat-team/9router/pull/30), chỉ thêm ghi version vào `package.json`): `wecat-9router:0.5.119-9f15afeb3cb0`, ID `sha256:40fcc96ee8f5df76cfc4833cbf94cf9cc596f97fee07c7f9e9882676008e573b`; đổi lúc 10:40 (secondary, script chuẩn) và 10:53 (primary, đổi nhanh) ngày 13/11, cả hai đạt canary/monitor, dashboard hiện 0.5.119. Image đầu tiên `0.5.119-0f77e4960171` đã gỡ. Đã nạp sang cả hai host qua SSH và so ID với receipt. Image 0.5.116 (`wecat-9router:0.5.116-07fd4760ffb7`) giữ làm rollback; primary giữ thêm 0.5.112.
 
 | Vai trò | Phiên bản đang chạy | Kết quả 13/11/2026 | Dữ liệu/cấu hình | Rollback giữ trên host |
 |---|---|---|---|---|
