@@ -1,8 +1,8 @@
-# Model Codex qua 9Router (0.5.119)
+# Model Codex qua 9Router (0.5.123)
 
 Tài liệu đối chiếu cho app gọi gateway (app.wecat.vn và các app khác). Cập nhật file này mỗi khi nâng upstream có đổi catalog Codex.
 
-- Nguồn catalog: `open-sse/providers/registry/codex.js` tại upstream `v0.5.119` (`1855aa44`; catalog không đổi so với 0.5.116). App gọi với prefix `cx/`, ví dụ `cx/gpt-5.6-terra`.
+- Nguồn catalog: `open-sse/providers/registry/codex.js` tại upstream `v0.5.123` (`5ae63d22`; so với 0.5.119 chỉ thêm họ `gpt-6.2`, không gỡ model nào). App gọi với prefix `cx/`, ví dụ `cx/gpt-5.6-terra`.
 - Giá: USD/1 triệu token vào/ra, lấy từ `open-sse/providers/pricing.js`. Đây là ước tính 9Router dùng cho trang Usage, **không phải hóa đơn**: Codex dùng quota tài khoản ChatGPT.
 - Bằng chứng production: số request thành công trong 14 ngày đến 16/10/2026, gộp theo model, không có dữ liệu khách hàng.
 - Model có trong catalog chưa chắc tài khoản dùng được. Trước khi bật model mới trong app, thử ít nhất một lượt thật với đúng payload của app.
@@ -15,6 +15,8 @@ Tài liệu đối chiếu cho app gọi gateway (app.wecat.vn và các app khá
 | `gpt-5.6-terra` | 2,5 / 15 | có (mặc định text/copy đến 27/10) | primary ~131k | canary chat mỗi lượt rollout |
 | `gpt-5.6-sol` | 5 / 30 | có | primary ~10k | kiểm qua HTTPS 16/10: 200 |
 | `gpt-6-astra` | 10 / 50 | có | secondary 431 | đắt nhất |
+| `gpt-6.2-sol`, `gpt-6.2-sol[1m]` | chưa có giá riêng | **chưa** | chưa có | **mới từ 0.5.123**; `responsesLite`; cần định danh Codex CLI ≥ 0.166.0 (đang 0.167.1). Chưa thử với tài khoản WeCat |
+| `gpt-6.2-astra`, `gpt-6.2-astra[1m]` | chưa có giá riêng | **chưa** | chưa có | **mới từ 0.5.123**; chưa thử với tài khoản WeCat |
 | `gpt-6.1-sol` | 2 / 10 | **chưa** | secondary 38 | `responsesLite`; preset mặc định của Codex CLI upstream |
 | `gpt-6.1-terra` | 1 / 5 | **chưa** | chưa có | **mới từ 0.5.112**; `responsesLite`, thinking GPT-6-Lite, context 500k trên Codex. Rẻ hơn `gpt-6-sol`; chưa thử với tài khoản WeCat |
 | `gpt-6-sol` | 2 / 10 | có, **mặc định** text nặng (từ 27/10) | chưa có | `responsesLite`; từ 0.5.111 là model điều phối tool `gpt-image-*` (canary mỗi lượt rollout kiểm qua tool); chat thử 27/10: 200 |

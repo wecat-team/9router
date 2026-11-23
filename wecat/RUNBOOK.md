@@ -4,7 +4,7 @@ Dùng tên vai trò `primary` và `secondary`; hostname/SSH identity/secret th�
 
 ## Điều kiện phát hành
 
-- PR đã review và merge vào `master`. Check bắt buộc `WeCat release gate` (Actions validation) phải đạt trên PR; gate phát hành image vẫn chạy trên máy operator.
+- PR đã review và merge vào `master`, kèm kết quả gate local trên nhánh. Không dùng GitHub Actions; gate phát hành image chạy trên máy operator.
 - Deploy **thủ công từ máy operator**, không qua GitHub Actions hay registry. Trên checkout sạch của commit đó, chạy gate với image amd64 (giống kiến trúc hai host), rồi nạp image sang từng host:
 
   ```sh

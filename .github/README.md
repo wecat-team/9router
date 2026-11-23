@@ -13,13 +13,13 @@ Fork này **không phát triển tính năng riêng**. Mục đích là theo sá
 | Upstream | `decolua/9router`, đã đồng bộ **0.5.111** (tag `v0.5.111`, [`3a978a63`](https://github.com/decolua/9router/commit/3a978a631ad65529c06e48ce495092d5bba29f46)). |
 | Fork | Upstream cộng với `wecat/` (gate kiểm chứng, runbook, nhật ký sự cố). `master` chỉ nhận qua PR, gate chạy trên máy operator. |
 | Production | primary và secondary đều chạy **0.5.111** từ cùng image fork (`wecat-9router:0.5.111-605a6b0e2322`), canary/monitor đạt (secondary 26/10 19:37, primary 27/10 00:00 giờ VN). |
-| Phát hành | Workflow *WeCat validation* là check bắt buộc của PR; publish/watch tắt. Gate image chạy trên máy operator; deploy thủ công qua SSH, không qua registry/Actions. Model Codex cho app: [MODELS](../wecat/MODELS.md). |
+| Phát hành | Không dùng GitHub Actions/CI-CD. Gate image chạy trên máy operator; deploy thủ công qua SSH, không qua registry/Actions. Model Codex cho app: [MODELS](../wecat/MODELS.md). |
 
 ## Khác gì upstream
 
 - `wecat/`: gate offline (contract ảnh, mutation, 8 suite critical, Docker build với lockfile ghim, smoke API + browser), receipt gắn commit/image, runbook hai production, [nhật ký sự cố](../wecat/INCIDENTS.md), [ledger release](../wecat/releases/).
 - `wecat/Dockerfile`: giống Dockerfile upstream nhưng dùng Node image và lockfile ghim, kèm patch IP client (`WECAT_TRUSTED_PROXY_IPS`, chỉ nhận danh sách IP chính xác).
-- Workflow publish/watch và phát hành upstream (Docker Hub, tray, GitBook) vẫn tắt. Validation đang active, master giữ check bắt buộc và lịch sử tuyến tính; không đổi bảo vệ để merge. Image production do operator build bằng gate rồi nạp qua SSH; không có `latest` hay deploy tự động.
+- Mọi workflow (validation, publish/watch, phát hành upstream: Docker Hub, tray, GitBook) đều tắt. `master` bắt buộc qua PR và giữ lịch sử tuyến tính, không còn check bắt buộc. Image production do operator build bằng gate rồi nạp qua SSH; không có `latest` hay deploy tự động.
 - Root `README.md` là bản gốc của upstream, giữ nguyên để merge không conflict. Trang này (`.github/README.md`) là trang GitHub hiển thị cho fork.
 
 ## Nâng lên bản upstream mới
