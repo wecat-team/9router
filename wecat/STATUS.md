@@ -1,13 +1,23 @@
 # Tình trạng 9Router WeCat
 
-Cập nhật: **2026-11-13** (cả hai production chạy 0.5.119). Đây là nơi duy nhất ghi "đang ở đâu". Cập nhật file này trong cùng PR khi nâng upstream, và sau mỗi lần rollout production. Chỉ dùng tên vai trò primary/secondary; hostname, IP và credential không vào repo.
+Cập nhật: **2026-11-23** (cả hai production chạy 0.5.119; candidate 0.5.123 đang chờ review, chưa rollout). Đây là nơi duy nhất ghi "đang ở đâu". Cập nhật file này trong cùng PR khi nâng upstream, và sau mỗi lần rollout production. Chỉ dùng tên vai trò primary/secondary; hostname, IP và credential không vào repo.
 
 ## Upstream
 
 - Nguồn: [`decolua/9router`](https://github.com/decolua/9router), phát hành bằng tag `vX.Y.Z` trên `master`.
 - Bản đang chạy production: **0.5.119**, commit `1855aa44473e88feac9d3f131b9c0c5fc9706b68` (fork `0f77e496` trên `master`, [PR #28](https://github.com/wecat-team/9router/pull/28)); 0.5.116 giữ làm image rollback.
+- Candidate: **0.5.123** (`5ae63d22847e07042e235b40e1d926b65e509013`) kèm bản vá đường ảnh; chưa gate trên `master`, chưa ship, chưa rollout.
 - Bản trước: **0.5.116** (`1339107e624d1ab150c6a0c2c2ee22caa7e9db2f`, [PR #26](https://github.com/wecat-team/9router/pull/26)), chạy 09–13/11; primary crash heap OOM (W-019).
 - PR #10 squash merge nên `master` không chứa tổ tiên upstream; `prepare-upstream` gặp 19 conflict (merge-base v0.5.95). Fork không sửa file nào trong số đó nên lấy nguyên bản upstream. PR nâng upstream sau nên giữ merge commit để tránh lặp lại.
+
+### Nâng 0.5.123 (candidate, chưa rollout)
+
+- Upstream 0.5.119 → 0.5.123 (`5ae63d22847e07042e235b40e1d926b65e509013`): 35 commit, 152 file, áp diff, 0 conflict, `treeDrift` sạch; không file fork-owned nào bị upstream sửa. Upstream đã dời tag `v0.5.119` từ `1855aa44` sang `d1970ac9` (commit con, chỉ nâng version trong `package.json`), nên `git fetch --tags` báo *would clobber*: cập nhật tag local sau khi kiểm diff, đừng dùng `--force` mù.
+- **Codex:** thêm `gpt-6.2-sol`, `gpt-6.2-astra` và bản `[1m]`, không gỡ model nào, định danh CLI giữ 0.167.1. So offline 576 tổ hợp request (9 model WeCat dùng × 8 mức reasoning × 4 kiểu body × stream/non-stream) qua translator và executor Codex: payload giống hệt 0.5.119, không tính session/cache/metadata. Không cần đổi app.
+- **Bản vá kèm theo (chờ upstream [#5782](https://github.com/decolua/9router/pull/5782)):** khi Codex trả 429 `usage_limit_reached` có `resets_at`/`resets_in_seconds`, đường ảnh nay khoá tài khoản tới lúc reset (trần 30 phút như đường chat) thay vì backoff 2 s…5 phút rồi gọi lại. Hai test suite của bản vá vào `criticalSuites`. Hành vi với tài khoản thật chỉ xác nhận được sau rollout, vì chưa biết endpoint ảnh có luôn trả trường reset hay không; không có trường này thì giữ backoff cũ.
+- Dependency: Next 16.4.3 → 16.4.6, node-forge 1.4.0 → 1.4.3; app không thêm package hay install script. SQLite không có migration, chỉ thêm setting `reaAllowEnabled` (mặc định tắt) và trường tùy chọn `upstreamModelId` của custom model.
+- Bảo mật: không đổi `custom-server.js`, auth, `dashboardGuard.js`. Route mới `/api/media-providers/tts/elevenlabs/models` nằm trong `ALWAYS_PROTECTED`. **Không bật "REA allow"**: tùy chọn này xoá đoạn chính sách bảo mật khỏi system prompt của client. `/v1/models` thêm lượt gọi `opencode.ai` không đặt timeout do opencode là provider no-auth; app không dùng route này.
+- Phần còn lại thuộc provider WeCat không dùng (Antigravity, Kiro, OpenDesign Go, DeepRelay, ElevenLabs, NVIDIA NIM, Cloudflare AI, Alibaba, Kimi, Mistral, Qoder…).
 
 ### Nâng 0.5.119
 

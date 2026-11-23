@@ -7,6 +7,8 @@
   "criticalSuites": [
     "unit/codex-image-models.test.js",
     "unit/image-generation.test.js",
+    "unit/codex-native-image-generation.test.js",
+    "unit/image-generation-quota-reset.test.js",
     "unit/codex-refresh-token.test.js",
     "unit/codex-registry-model-routing.test.js",
     "unit/custom-server-peer-headers.test.js",

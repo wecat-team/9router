@@ -35,6 +35,11 @@ export const FORK_OWNED_FILES = [
   'tests/unit/codex-refresh-token.test.js',
   // 0.5.116: route commandcode auto-import trả apiKey, thêm vào ALWAYS_PROTECTED/LOCAL_ONLY_PATHS.
   'src/dashboardGuard.js',
+  // Bản vá chờ upstream merge (decolua/9router#5782): đường ảnh khoá tài khoản tới đúng lúc quota reset.
+  // Upstream merge rồi thì gỡ các file này khỏi danh sách.
+  'open-sse/handlers/imageGenerationCore.js',
+  'tests/unit/codex-native-image-generation.test.js',
+  'tests/unit/image-generation-quota-reset.test.js',
 ];
 
 export function isForkOwned(file) {
