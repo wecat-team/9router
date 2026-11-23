@@ -2,7 +2,7 @@
   "schema": 1,
   "upstream": "https://github.com/decolua/9router.git",
   "upstreamRef": "master",
-  "acceptedUpstreamCommit": "1855aa44473e88feac9d3f131b9c0c5fc9706b68",
+  "acceptedUpstreamCommit": "5ae63d22847e07042e235b40e1d926b65e509013",
   "nodeImage": "node:22.23.4-alpine@sha256:fe4f6d74e20370acb04ad889077d14d0f64a9c8ea6a42bc60cddf1e844699914",
   "criticalSuites": [
     "unit/codex-image-models.test.js",
@@ -15,8 +15,8 @@
     "unit/openai-responses-completed-usage.test.js",
     "unit/wecat-image-not-returned.test.js"
   ],
-  "upstreamVersion": "0.5.119",
-  "packageManifestSha256": "59a6ff2b54b6aace7e2ee5d7d422598fff205221114cf441cafc60b4bd685b5e",
-  "testManifestSha256": "320deca1e8563b1f70a33bca22530c549069174c8b8f6c8cb08fcf5c0f9e3f9f",
+  "upstreamVersion": "0.5.123",
+  "packageManifestSha256": "8d7aa642070229ccc98c59af085798851aef0e14434c68bf1e1d89ada2e344ce",
+  "testManifestSha256": "92c3d8a3100fcfc8ca803598639ed6d8db8dabec4f6ea140fc4fd1c43349dc8a",
   "toolManifestSha256": "fe04f102fe0c946686e0f717866fc9e15cc73cc2217416c7ccef3fd3f97d85d1"
 }
