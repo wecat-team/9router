@@ -1,0 +1,135 @@
+{
+  "schema": 1,
+  "version": "0.5.123",
+  "upstreamCommit": "5ae63d22847e07042e235b40e1d926b65e509013",
+  "forkCommit": "b38c1e701bf8625a81e901558dda085bec85f4bb",
+  "date": "2026-11-23",
+  "status": "production-verified",
+  "pullRequest": "https://github.com/wecat-team/9router/pull/32",
+  "validation": {
+    "pullRequestCheck": "không dùng: GitHub Actions đã tắt, check bắt buộc đã gỡ theo đồng ý của operator",
+    "operatorReceipt": "passed",
+    "criticalTests": "139/139",
+    "containerSmoke": "passed (Chrome hệ thống qua WECAT_CHROME_EXECUTABLE)",
+    "offlineRealProviderCalls": 0,
+    "upstreamApply": "diff (master mất tổ tiên upstream), 0 conflict, treeDrift sạch, không file fork-owned bị upstream sửa",
+    "codexPayloadDiff": "576 tổ hợp giống hệt 0.5.119 (không tính session/cache/metadata)"
+  },
+  "image": {
+    "name": "wecat-9router:0.5.123-b38c1e701bf8",
+    "id": "sha256:dd9980926a64c4c79ea5b9dda902cf2f54817324bf8e88243d76f4340c5a629c",
+    "platform": "linux/amd64",
+    "builtBy": "operator-local-gate",
+    "delivery": "docker save | ssh docker load",
+    "verifiedOnBothHosts": true
+  },
+  "targets": {
+    "secondary": {
+      "status": "production-verified",
+      "runningVersion": "0.5.123",
+      "rolloutDate": "2026-11-23",
+      "rolloutTimeVn": "11:35",
+      "method": "operator-rollout.py (gate hold-if-idle)",
+      "shadowAuthAndPreservation": "passed",
+      "apiKeyCount": {
+        "before": 2,
+        "after": 2
+      },
+      "providerConnectionCount": {
+        "before": 5,
+        "after": 5
+      },
+      "keysPreserved": true,
+      "configPreserved": true,
+      "sqliteIntegrity": "ok",
+      "monitorSeconds": 180,
+      "restartCount": 0,
+      "canary": {
+        "status": "passed",
+        "checkedAt": "2026-11-23T04:35:48.331Z",
+        "chat": {
+          "http": 200,
+          "elapsedMs": 1627
+        },
+        "imageWithTwoReferences": {
+          "model": "gpt-5.6-luna-image",
+          "http": 200,
+          "elapsedMs": 15527,
+          "bytes": 960293,
+          "width": 1254
+        },
+        "toolImageWithTwoReferences": {
+          "model": "gpt-image-2.5-sunburst",
+          "http": 200,
+          "elapsedMs": 13446,
+          "bytes": 966108,
+          "width": 1254
+        },
+        "realProviderCalls": 3
+      },
+      "rollback": "image 0.5.119 + env cũ + SQLite backup trong bộ rollout"
+    },
+    "primary": {
+      "status": "production-verified",
+      "runningVersion": "0.5.123",
+      "rolloutDate": "2026-11-23",
+      "rolloutTimeVn": "11:43",
+      "approvedBy": "operator, giờ cao điểm",
+      "method": "fast-swap (không giữ traffic; VACUUM INTO backup, shadow, canary, monitor, tự rollback)",
+      "appImpact": "32 lỗi 502 trong phút 11:43 khi đổi container",
+      "shadowAuthAndPreservation": "passed",
+      "apiKeyCount": {
+        "before": 3,
+        "after": 3
+      },
+      "providerConnectionCount": {
+        "before": 6,
+        "after": 6
+      },
+      "keysPreserved": true,
+      "configPreserved": true,
+      "monitorSeconds": 180,
+      "restartCount": 0,
+      "canary": {
+        "status": "passed",
+        "checkedAt": "2026-11-23T04:45:04.229Z",
+        "chat": {
+          "http": 200,
+          "elapsedMs": 2330
+        },
+        "imageWithTwoReferences": {
+          "model": "gpt-5.6-luna-image",
+          "http": 200,
+          "elapsedMs": 15149,
+          "bytes": 971121,
+          "width": 1254
+        },
+        "toolImageWithTwoReferences": {
+          "model": "gpt-image-2",
+          "http": 200,
+          "elapsedMs": 16447,
+          "bytes": 964698,
+          "width": 1254
+        },
+        "realProviderCalls": 3
+      },
+      "rollback": "image 0.5.119 + compose cũ + SQLite backup VACUUM INTO"
+    }
+  },
+  "rollback": {
+    "image": "wecat-9router:0.5.119-9f15afeb3cb0",
+    "imageId": "sha256:40fcc96ee8f5df76cfc4833cbf94cf9cc596f97fee07c7f9e9882676008e573b",
+    "oldImageRetainedOnBothHosts": true,
+    "schemaChanged": false,
+    "databaseSnapshotRestored": false
+  },
+  "notes": "Kèm bản vá decolua/9router#5782: đường ảnh khoá tài khoản theo thời điểm reset của Codex (trần 30 phút). Sau rollout đã thấy khoá 1800 s trên primary.",
+  "appHandoff": {
+    "status": "not-needed",
+    "date": "2026-11-23",
+    "removedModelsInUse": [],
+    "probe": "skipped",
+    "appPullRequest": null,
+    "notes": "app-handoff v0.5.119: không gỡ model, chỉ thêm họ gpt-6.2. Khuyến nghị (không bắt buộc): app đặt trần thời gian chờ vì Retry-After của ảnh có thể tới 1800 s khi mọi tài khoản hết lượt."
+  }
+}
