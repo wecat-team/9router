@@ -74,7 +74,7 @@ Cập nhật: **2026-11-23** (cả hai production chạy 0.5.119; candidate 0.5.
 ## Fork
 
 - [PR #10](https://github.com/wecat-team/9router/pull/10) đã squash merge theo bảo vệ lịch sử tuyến tính. Commit phát hành: `1bb26a28395bf77bceb6196bca8f8494c1108676`. [Validation PR](https://github.com/wecat-team/9router/actions/runs/38022476245) và [validation master](https://github.com/wecat-team/9router/actions/runs/38022748879) đạt; receipt master đã tải kiểm tra.
-- Bảo vệ `master`: bắt buộc PR và check `WeCat release gate` từ GitHub Actions, chặn force-push và xóa nhánh. Workflow validation đang active; các workflow publish/deploy/watch vẫn tắt. Gate phát hành image production vẫn chạy trên máy operator.
+- Bảo vệ `master`: bắt buộc PR, lịch sử tuyến tính, chặn force-push và xóa nhánh, áp dụng cả admin. Từ 23/11/2026 không dùng GitHub Actions/CI-CD: workflow validation đã tắt (20/11) và check bắt buộc `WeCat release gate` đã gỡ theo đồng ý của operator. Gate phát hành chạy trên máy operator.
 - Theo dõi vận hành: [issue #2](https://github.com/wecat-team/9router/issues/2). Lỗi mới mở theo template *WeCat build / regression*.
 
 ### Phát hành 0.5.99

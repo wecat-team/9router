@@ -8,7 +8,7 @@
 - Không commit `.env`, SSH key, OAuth token, API key/cookie, hostname/IP production, ảnh hoặc prompt khách hàng. Public docs chỉ dùng primary/secondary.
 - Không deploy/pull latest theo push/PR. Bản candidate phải có full SHA, image digest, receipt đúng commit và các gate đạt. Production cần operator approval riêng, canary và rollback.
 - Test local dùng dataset/container riêng, không dùng volume hoặc credential production. Canary thật cần cờ --allow-live và được phép sử dụng quota.
-- GitHub Actions hạn chế vì chi phí: chỉ workflow *WeCat validation* active (check bắt buộc của PR vào `master`); publish/watch/deploy tắt, không bật lại hay thêm workflow mới nếu chưa được đồng ý. Gate phát hành chạy trên máy operator và tóm tắt kết quả trong PR. Rollout production theo `wecat/RUNBOOK.md`; primary chỉ rollout ngoài giờ cao điểm (W-017).
+- Không dùng GitHub Actions/CI-CD: mọi workflow đã tắt, `master` không còn check bắt buộc (từ 23/11/2026). Không bật lại hay thêm workflow nếu chưa được đồng ý. Gate phát hành chạy trên máy operator và tóm tắt kết quả trong PR. Rollout production theo `wecat/RUNBOOK.md`; primary chỉ rollout ngoài giờ cao điểm (W-017).
 - Đổi danh sách model của app: đối chiếu `wecat/MODELS.md` (cập nhật file này khi catalog Codex đổi).
 - Sau khi rollout đạt cả hai production, chạy `node wecat/app-handoff.mjs v<bản-cũ>` theo `wecat/APP-SYNC.md`. Nếu catalog/đường model Codex đổi, đưa prompt sinh ra cho dev chuyển sang agent ở repo app, và ghi `appHandoff` vào ledger. Chưa bàn giao thì chưa đóng đợt nâng.
 - Gate chuẩn: `node wecat/check.mjs` và `node wecat/verify-receipt.mjs`. Diagnostic không là release evidence. Lỗi critical mới không được che bằng known-fails.

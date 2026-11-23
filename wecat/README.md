@@ -64,7 +64,7 @@ Không tự đưa các lỗi test mới vào `known-fails`. Suite đầy đủ c
 
 ## Phát hành và production
 
-- **Không CI/CD deploy.** Workflow *WeCat validation* đang active và là check bắt buộc của PR vào `master` (kèm lịch sử tuyến tính); các workflow publish/watch vẫn tắt. Commit chỉ sửa tài liệu có thể dùng `[skip ci]`, nhưng trước khi merge cần một commit không có `[skip ci]` để check chạy. Gate image (`node wecat/check.mjs`) chạy trên máy operator, receipt đúng SHA/image. Không bật thêm workflow hoặc đổi bảo vệ nếu chưa được cho phép.
+- **Không dùng GitHub Actions/CI-CD.** Mọi workflow `wecat-*` đã tắt và `master` không còn check bắt buộc (từ 23/11/2026); bảo vệ `master` giữ yêu cầu qua PR, lịch sử tuyến tính, chặn force-push và xóa nhánh. Trước khi merge, chạy gate local trên nhánh (`node wecat/check.mjs --diagnostic`) và ghi kết quả vào PR; gate phát hành chạy lại trên commit `master`. Không bật lại workflow hoặc đổi bảo vệ nếu chưa được cho phép.
 - **Deploy production thủ công từ máy operator**, không qua GitHub Actions. Sau khi PR merge: chạy gate local với image amd64, `node wecat/ship-image.mjs <host>...` nạp image qua SSH (so image ID với receipt), rồi rollout primary trước, secondary sau, theo [runbook](RUNBOOK.md). Repo không chứa SSH key hay hostname production.
 - Các workflow phát hành của upstream được chặn cho fork để tránh dùng nhầm namespace hoặc quy trình.
 
